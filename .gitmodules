@@ -1,0 +1,9 @@
+[submodule "deps/matrix"]
+	path = deps/matrix
+	url = https://github.com/hzeller/rpi-rgb-led-matrix.git
+[submodule "deps/FastNoise2"]
+	path = deps/FastNoise2
+	url = https://github.com/Auburn/FastNoise2.git
+[submodule "deps/oatpp"]
+	path = deps/oatpp
+	url = https://github.com/oatpp/oatpp.git
