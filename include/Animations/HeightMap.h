@@ -3,13 +3,22 @@
 
 #include "Animation.h"
 #include "led-matrix.h"
+#include "parameters/param_system.hpp"
 #include <cmath>
 
 #include <FastNoise/FastNoise.h>
 
 namespace animations {
 
-class HeightMap : public Animation {
+struct HeightMapParams : ParameterSet<HeightMapParams> {
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
+  // Provide tuple of references for iteration
+  auto &tuple() { return empty_tuple; }
+  auto const &tuple() const { return empty_tuple; }
+};
+
+class HeightMap : public Animation<HeightMap, struct HeightMapParams> {
 private:
   FastNoise::SmartNode<> heightMap;
   float *newPixels;
@@ -19,6 +28,18 @@ private:
 public:
   HeightMap(rgb_matrix::RGBMatrix *matrix);
   void animate(double time) override;
+
+  std::string name() const override { return "HeightMap"; }
+
+  // Override mode parameter methods - HeightMap has no parameters so all modes
+  // are the same
+  void applyDefaultParameters() override {
+    // No parameters to set
+  }
+
+  void applyPresetParameters() override {
+    // No parameters to set
+  }
 
   ~HeightMap() {
     delete[] newPixels;

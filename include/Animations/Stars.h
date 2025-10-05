@@ -2,11 +2,21 @@
 #define STARS_ANIMATION_H
 
 #include "Animation.h"
-#include <array>
+#include "parameters/param_system.hpp"
 #include <cmath>
 #include <cstdint>
 
 namespace animations {
+
+struct StarsParams : ParameterSet<StarsParams> {
+  // Add color parameters for stars and shooting stars
+  PARAM_COLOR(starsColor, Color(230, 245, 255), "Stars Color")
+  PARAM_COLOR(shootingStarsColor, Color(255, 255, 255), "Shooting Stars Color")
+
+  // Provide tuple of references for iteration
+  auto tuple() { return std::tie(starsColor, shootingStarsColor); }
+  auto tuple() const { return std::tie(starsColor, shootingStarsColor); }
+};
 
 struct ShootingStar {
   float x;
@@ -19,7 +29,7 @@ struct ShootingStar {
   uint8_t color[3];
 };
 
-class Stars : public Animation {
+class Stars : public Animation<Stars, struct StarsParams> {
 private:
   std::vector<ShootingStar> shooting_stars;
   double last_time = 0;
@@ -37,14 +47,21 @@ public:
   }
   void animate(double time) override;
 
+  std::string name() const override { return "Stars"; }
+
+  // Override mode parameter methods
+  void applyDefaultParameters() override {
+    params_.starsColor.value = Color(230, 245, 255);
+    params_.shootingStarsColor.value = Color(255, 255, 255);
+  }
+
+  void applyPresetParameters() override {
+    // Preset: Blue stars with red shooting stars
+    params_.starsColor.value = Color(100, 150, 255);
+    params_.shootingStarsColor.value = Color(255, 100, 100);
+  }
+
 protected:
-  uint8_t stars_color[3] = {230, 245, 255};
-  // std::vector<std::array<uint8_t, 3>> shooting_colors = {
-  //     std::array<uint8_t, 3>{255, 255, 255}, std::array<uint8_t, 3>{255, 0,
-  //     0}, std::array<uint8_t, 3>{150, 0, 255}, std::array<uint8_t, 3>{255,
-  //     150, 0}, std::array<uint8_t, 3>{0, 180, 255}};
-  std::vector<std::array<uint8_t, 3>> shooting_colors = {
-      std::array<uint8_t, 3>{255, 255, 255}};
   rgb_matrix::FrameCanvas *offscreen_canvas;
   uint8_t *table;
 };

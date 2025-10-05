@@ -23,11 +23,12 @@ void Stars::animate(double time) {
       brightness = table[y * matrix->width() + x];
       int new_brightness = static_cast<int>(
           brightness +
-          brightness * sin(time * 0.4 + (4 * x - y) / 10.0) * 0.45);
+          brightness * sin(time * 0.7f + (4.0f * x - y) / 10.0f) * 0.45f);
       brightness = std::clamp(new_brightness, 0, 255);
-      offscreen_canvas->SetPixel(x, y, brightness * stars_color[0] / 255,
-                                 brightness * stars_color[1] / 255,
-                                 brightness * stars_color[2] / 255);
+      Color stars_color = params_.starsColor.value;
+      offscreen_canvas->SetPixel(x, y, brightness * stars_color.r / 255,
+                                 brightness * stars_color.g / 255,
+                                 brightness * stars_color.b / 255);
     }
   }
 
@@ -36,10 +37,10 @@ void Stars::animate(double time) {
     bool valid_star = false;
     int attempts = 0;
     star.age = 0;
-    int color_idx = rand() % shooting_colors.size();
-    star.color[0] = shooting_colors[color_idx][0];
-    star.color[1] = shooting_colors[color_idx][1];
-    star.color[2] = shooting_colors[color_idx][2];
+    Color shooting_color = params_.shootingStarsColor.value;
+    star.color[0] = shooting_color.r;
+    star.color[1] = shooting_color.g;
+    star.color[2] = shooting_color.b;
 
     while (!valid_star &&
            attempts < 100) { // Limit attempts to avoid infinite loop

@@ -22,12 +22,38 @@ void Atom::animate(double time) {
   rgb_matrix::DrawCircle(offscreen_canvas, center_x, center_y, 1,
                          rgb_matrix::Color(255, 255, 255));
 
-  // Draw orbiting dots
+  // Draw orbiting dots using parameters
   float radius = 63.0f;
   float offset = 1.2f;
-  float max_speed = 4.0f;
-  int num_dots = 48; // 24 par mal, 32 aussi, 12 wow, 15 normal
+  float max_speed = 4.0f * params_.speed.value; // Use speed parameter
+  int num_dots = 48; // Could be made into a parameter
   int num_circles = 3;
+
+  // Apply style variations based on style parameter
+  switch (params_.style.value) {
+  case 1:
+    num_circles = 4;
+    num_dots = 36;
+    break;
+  case 2:
+    num_circles = 5;
+    num_dots = 24;
+    offset = 1.5f;
+    break;
+  case 3:
+    num_circles = 2;
+    num_dots = 60;
+    offset = 0.8f;
+    break;
+  case 4:
+    num_circles = 6;
+    num_dots = 18;
+    offset = 2.0f;
+    break;
+  default: // case 0 - default style
+    break;
+  }
+
   float x, y, x2, y2;
   for (int rad_fact = 1; rad_fact < num_circles + 1; rad_fact++) {
     float rad = (float)radius * (float)rad_fact / (float)num_circles;
@@ -35,9 +61,9 @@ void Atom::animate(double time) {
     float speed = max_speed * (float)(num_circles - (float)rad_fact * 0.80) /
                   (float)num_circles;
     uint8_t r, g, b;
-    utils::hsvToRgb(355.0f - (float)(rad_fact - 1) * 105.0 /
-                                 (float)(num_circles - 1),
-                    1.0f, 1.0f, r, g, b);
+    utils::hsvToRgb(
+        355.0f - (float)(rad_fact - 1) * 105.0 / (float)(num_circles - 1),
+        params_.saturation.value, 1.0f, r, g, b); // Use saturation parameter
     for (int i = 0; i < num_dots; i++) {
       float angle = mult * time * speed + i * (1.0f * M_PI) / num_dots;
       float angle2 = M_PI_4 + i * (6.0f * 2.0f * M_PI) / num_dots +

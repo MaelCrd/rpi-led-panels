@@ -2,6 +2,7 @@
 #define MAZE_ANIMATION_H
 
 #include "Animation.h"
+#include "parameters/param_system.hpp"
 #include <cmath>
 #include <random>
 #include <utility>
@@ -9,7 +10,15 @@
 
 namespace animations {
 
-class Maze : public Animation {
+struct MazeParams : ParameterSet<MazeParams> {
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
+  // Provide tuple of references for iteration
+  auto &tuple() { return empty_tuple; }
+  auto const &tuple() const { return empty_tuple; }
+};
+
+class Maze : public Animation<Maze, struct MazeParams> {
 private:
   // Dimensions of the grid (use the canvas size)
   int w_{0}, h_{0};
@@ -41,6 +50,18 @@ public:
     offscreen_canvas = matrix->CreateFrameCanvas();
   };
   void animate(double time) override;
+
+  std::string name() const override { return "Maze"; }
+
+  // Override mode parameter methods - Maze has no parameters so all modes are
+  // the same
+  void applyDefaultParameters() override {
+    // No parameters to set
+  }
+
+  void applyPresetParameters() override {
+    // No parameters to set
+  }
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;

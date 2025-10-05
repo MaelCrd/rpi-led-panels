@@ -51,6 +51,16 @@ void GameOfLife::parseRules(const std::string &rules) {
 }
 
 void GameOfLife::animate(double time) {
+  if (lastTime == 0) {
+    lastTime = time;
+    return;
+  }
+
+  if (time - lastTime < 1.0 / fps) {
+    return; // Skip frame to maintain target FPS
+  }
+  lastTime = time;
+
   const int width = matrix->width();
   const int height = matrix->height();
 

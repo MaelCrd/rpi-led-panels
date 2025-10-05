@@ -41,6 +41,6 @@
 *.dwo
 
 #
-deps/
+# deps/
 .cache/
 build/
