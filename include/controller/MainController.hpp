@@ -28,6 +28,8 @@ public:
   ADD_CORS(setAnimationModeInt)
   ADD_CORS(getAnimationMode)
   ADD_CORS(setAnimationParameters)
+  ADD_CORS(getState)
+  ADD_CORS(setState)
 
   ENDPOINT("GET", "/animation", getCurrentAnimation) {
     int val = worker->getCurrentAnimation();
@@ -89,6 +91,24 @@ public:
       }
     } catch (const std::exception &e) {
       return createResponse(Status::CODE_400, "Invalid JSON format");
+    }
+  }
+
+  ENDPOINT("GET", "/state", getState) {
+    bool val = worker->getState();
+    return createResponse(Status::CODE_200, val ? "1" : "0");
+  }
+
+  ENDPOINT("POST", "/state/{val}", setState, PATH(Int32, val)) {
+    if (val == 1) {
+      worker->setState(true);
+      return createResponse(Status::CODE_200, "Animation manager turned ON");
+    } else if (val == 0) {
+      worker->setState(false);
+      return createResponse(Status::CODE_200, "Animation manager turned OFF");
+    } else {
+      return createResponse(Status::CODE_400,
+                            "Invalid state value. Use '1'/'0'");
     }
   }
 };

@@ -145,74 +145,110 @@ void AnimationManager::run(volatile int *interrupt_received) {
   int anim_index = getCurrentAnimation();
   int last_index = anim_index;
   BaseAnimation *current_animation = animations[anim_index % animations.size()];
-  float fade_duration = 1.0; // seconds
+  float animation_fade_duration = 1.0; // seconds for animation transitions
 
   auto start = std::chrono::system_clock::now();
   int frame_count = 0;
   double time = 0;
   auto last = start;
+
   // Loop forever, animating the random animation.
   while (true) {
     if (*interrupt_received)
       break;
 
+    auto now = std::chrono::system_clock::now();
+    double deltaTime = std::chrono::duration<double>(now - last).count();
+    last = now;
+
+    // Update smooth brightness transitions
+    updateBrightnessTransition(deltaTime);
+
+    // Check for animation changes first (even when display is off)
     anim_index = getCurrentAnimation();
     if (anim_index != last_index) {
-      // Start transition
-      auto transition_start = std::chrono::system_clock::now();
-      auto transition_last = transition_start;
+      // Animation change requested
       BaseAnimation *next_animation =
           animations[anim_index % animations.size()];
 
-      // Fade out current animation and then fade in next animation
-      while (true) {
-        if (*interrupt_received)
-          break;
-        auto now = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed = now - transition_start;
-        std::chrono::duration<double> delta = now - transition_last;
-        transition_last = now;
-        double t = 2.0f * elapsed.count() / fade_duration;
+      // Check if we should render animation for fade transition
+      bool should_do_fade_transition =
+          target_state || current_brightness > 0.1f;
 
-        if (t <= 1.0) {
-          // Fade out current animation
-          current_animation->animate(time);
-          matrix->SetBrightness((1.0 - t) * brightness); // Fade out brightness
-        } else if (t <= 2.0) {
-          // Fade in next animation
-          next_animation->animate(time);
-          matrix->SetBrightness((t - 1.0) * brightness); // Fade in brightness
-        } else {
-          // Transition complete
-          matrix->SetBrightness(
-              brightness); // Ensure full brightness at the end
-          break;
+      if (should_do_fade_transition) {
+        // Display is on - do fancy fade transition
+        auto transition_start = std::chrono::system_clock::now();
+        auto transition_last = transition_start;
+
+        // Fade out current animation and then fade in next animation
+        while (true) {
+          if (*interrupt_received)
+            break;
+
+          auto transition_now = std::chrono::system_clock::now();
+          double transition_deltaTime =
+              std::chrono::duration<double>(transition_now - transition_last)
+                  .count();
+          transition_last = transition_now;
+
+          // Update brightness transitions during animation change
+          updateBrightnessTransition(transition_deltaTime);
+
+          std::chrono::duration<double> elapsed =
+              transition_now - transition_start;
+          double t = 2.0f * elapsed.count() / animation_fade_duration;
+
+          if (t <= 1.0) {
+            // Fade out current animation
+            current_animation->animate(time);
+            matrix->SetBrightness(
+                (1.0 - t) *
+                current_brightness); // Use current_brightness for smooth fade
+          } else if (t <= 2.0) {
+            // Fade in next animation
+            next_animation->animate(time);
+            matrix->SetBrightness(
+                (t - 1.0) *
+                current_brightness); // Use current_brightness for smooth fade
+          } else {
+            // Transition complete
+            matrix->SetBrightness(
+                current_brightness); // Ensure proper brightness at the end
+            break;
+          }
+          // Only advance time for animations during transition, don't
+          // accumulate large jumps
+          time += transition_deltaTime;
         }
-        time += delta.count();
-        last = now;
+        // Update the main loop timing after transition to prevent time jump
+        last = std::chrono::system_clock::now();
       }
-      // Switch to the next animation
+
+      // Switch to the next animation (whether display is on or off)
       current_animation = next_animation;
       last_index = anim_index;
     }
 
-    matrix->SetBrightness(brightness); // opti ?
-    current_animation->animate(time);
+    // Check if we should render animation (even when transitioning off, we
+    // continue animation)
+    bool should_animate = target_state || current_brightness > 0.1f;
 
-    auto now = std::chrono::system_clock::now();
-    time += std::chrono::duration<double>(now - last).count();
-    last = now;
-    // std::chrono::duration<double> elapsed = now - start;
-    // frame_count++;
-    // if (elapsed.count() >= 1.0) {
-    //   double fps = frame_count / elapsed.count();
-    //   // std::cout << "FPS: " << fps << " | Frame (" << frame_count << ")
-    //   // Time:
-    //   // " << time << std::endl;
-    //   start = now;
-    //   frame_count = 0;
-    // }
-    // // usleep(1 * 100); // wait a little to slow down things.
+    if (!should_animate) {
+      // Animation is OFF and we've faded out completely - clear the matrix and
+      // wait
+      matrix->Clear();
+      usleep(30000); // Sleep for 30ms before checking again
+      // Update timing to prevent time jump when turning back on
+      last = std::chrono::system_clock::now();
+      continue;
+    }
+
+    // Set the current brightness (which may be transitioning)
+    matrix->SetBrightness(current_brightness);
+
+    // Only advance animation time when we're actually animating
+    time += deltaTime;
+    current_animation->animate(time);
   }
 }
 
@@ -315,4 +351,51 @@ bool AnimationManager::setAnimationParameters(
   }
 
   return allSuccess;
+}
+
+void AnimationManager::updateBrightnessTransition(double deltaTime) {
+  // Get current target values (using individual locks to avoid deadlock)
+  float effective_target_brightness;
+  {
+    std::lock_guard<std::mutex> state_lock(mtx_state);
+    std::lock_guard<std::mutex> brightness_lock(mtx_brightness);
+    if (target_state) {
+      effective_target_brightness = static_cast<float>(target_brightness);
+    } else {
+      effective_target_brightness = 0.0f; // Fade to 0 when off
+    }
+  }
+
+  // Smoothly interpolate current brightness towards target
+  float brightness_diff = effective_target_brightness - current_brightness;
+
+  if (std::abs(brightness_diff) < 0.1f) {
+    // Close enough, snap to target
+    current_brightness = effective_target_brightness;
+  } else {
+    // Smoothly interpolate using fade_speed
+    float change_amount = fade_speed * deltaTime;
+    if (brightness_diff > 0) {
+      current_brightness = std::min(current_brightness + change_amount,
+                                    effective_target_brightness);
+    } else {
+      current_brightness = std::max(current_brightness - change_amount,
+                                    effective_target_brightness);
+    }
+  }
+
+  // Ensure current_brightness stays within valid bounds
+  current_brightness = std::max(0.0f, std::min(current_brightness, 255.0f));
+}
+
+bool AnimationManager::isInTransition() const {
+  float effective_target_brightness;
+  {
+    std::lock_guard<std::mutex> state_lock(mtx_state);
+    std::lock_guard<std::mutex> brightness_lock(mtx_brightness);
+    effective_target_brightness =
+        target_state ? static_cast<float>(target_brightness) : 0.0f;
+  }
+
+  return std::abs(current_brightness - effective_target_brightness) > 0.1f;
 }

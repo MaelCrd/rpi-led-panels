@@ -24,7 +24,7 @@ public:
              const std::string &rules = "B3/S23");
   void animate(double time) override;
 
-  std::string name() const override { return "GameOfLife"; }
+  std::string name() const override { return "Game of Life"; }
 
   // Override mode parameter methods - GameOfLife has no parameters so all modes
   // are the same

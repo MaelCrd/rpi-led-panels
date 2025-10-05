@@ -13,6 +13,7 @@ void Stars::animate(double time) {
   //   return;
   // Generate random pixel values
   offscreen_canvas->Clear();
+  Color stars_color = params_.starsColor.value;
   u_int8_t brightness = 0;
   for (int x = 0; x < matrix->width(); ++x) {
     for (int y = 0; y < matrix->height(); ++y) {
@@ -23,9 +24,9 @@ void Stars::animate(double time) {
       brightness = table[y * matrix->width() + x];
       int new_brightness = static_cast<int>(
           brightness +
-          brightness * sin(time * 0.7f + (4.0f * x - y) / 10.0f) * 0.45f);
+          brightness * sin(time * 0.4 + (4 * x - y) / 10.0) * 0.45);
       brightness = std::clamp(new_brightness, 0, 255);
-      Color stars_color = params_.starsColor.value;
+
       offscreen_canvas->SetPixel(x, y, brightness * stars_color.r / 255,
                                  brightness * stars_color.g / 255,
                                  brightness * stars_color.b / 255);
@@ -90,7 +91,7 @@ void Stars::animate(double time) {
   // Draw shooting stars
   for (const auto &star : shooting_stars) {
     float age_mult = sin(pow(star.age / star.life, 1) * M_PI);
-    float size_max = 1 * age_mult;
+    float size_max = 1.0 * age_mult;
     int max_brightness = 255 * age_mult;
     // Draw a filled circle
     int tail_size = 15 + 20 * age_mult;
