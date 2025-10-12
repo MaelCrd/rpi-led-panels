@@ -34,8 +34,10 @@ private:
 
 public:
   AnimationManager(rgb_matrix::RGBMatrix *matrix)
-      : current_animation_index(4), matrix(matrix), target_brightness(100),
-        current_brightness(100.0f), target_state(true) {}
+      : current_animation_index(-1), matrix(matrix), target_brightness(100),
+        current_brightness(100.0f), target_state(true) {
+    initAnimations();
+  }
 
   ~AnimationManager();
 
@@ -78,6 +80,12 @@ public:
   // Parameter management methods
   bool setAnimationParameters(int animationId,
                               const nlohmann::json &parameters);
+
+  // Image animation specific methods
+  bool setImageData(int animationId, const std::vector<uint8_t> &data,
+                    int width, int height);
+  bool setImageDataBase64(int animationId, const std::string &base64_data,
+                          int width, int height);
 
 private:
   // Helper methods for smooth transitions

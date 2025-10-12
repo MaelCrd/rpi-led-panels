@@ -68,4 +68,5 @@ target_include_directories(rpi-led-panels PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/qrcodegen"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/nlohmann_proper"
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/FastNoise2/src"
 )

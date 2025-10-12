@@ -122,8 +122,15 @@ public:
     // Default implementation: reset all parameters to their default values
     auto tup = params_.tuple();
     animations::forEachInTuple(tup, [](auto &param) {
-      param.value =
-          param.min + (param.max - param.min) * 0.5; // middle value as fallback
+      using ParamType = typename std::decay_t<decltype(param)>::value_type;
+      if constexpr (std::is_arithmetic_v<ParamType>) {
+        // Only do arithmetic for numeric types (int, float)
+        param.value = param.min +
+                      (param.max - param.min) * 0.5; // middle value as fallback
+      } else {
+        // For non-arithmetic types (strings, colors), use the default value
+        param.value = ParamType{}; // Default constructed value
+      }
     });
   }
 

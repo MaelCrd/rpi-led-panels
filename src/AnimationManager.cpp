@@ -6,6 +6,7 @@
 #include "Animations/DropletCircles.h"
 #include "Animations/GameOfLife.h"
 #include "Animations/HeightMap.h"
+#include "Animations/Image.h"
 #include "Animations/Matrix.h"
 #include "Animations/Maze.h"
 #include "Animations/Party.h"
@@ -57,6 +58,7 @@ void AnimationManager::initAnimations() {
   animations.push_back(new Maze(matrix));
   animations.push_back(new Atom(matrix));
   animations.push_back(new BirdFlock(matrix));
+  animations.push_back(new Image(matrix));
   // animations.push_back(new Spheres(matrix));
 
   // Animation names corresponding to the order above
@@ -351,6 +353,54 @@ bool AnimationManager::setAnimationParameters(
   }
 
   return allSuccess;
+}
+
+bool AnimationManager::setImageData(int animationId,
+                                    const std::vector<uint8_t> &data, int width,
+                                    int height) {
+  // Initialize animations if not already done
+  if (!animations_initialized) {
+    initAnimations();
+  }
+
+  // Check if animation ID is valid
+  if (animationId < 0 || animationId >= static_cast<int>(animations.size())) {
+    return false;
+  }
+
+  // Try to cast to Image animation
+  animations::Image *imageAnim =
+      dynamic_cast<animations::Image *>(animations[animationId]);
+  if (!imageAnim) {
+    return false; // Not an Image animation
+  }
+
+  imageAnim->setImageData(data, width, height);
+  return true;
+}
+
+bool AnimationManager::setImageDataBase64(int animationId,
+                                          const std::string &base64_data,
+                                          int width, int height) {
+  // Initialize animations if not already done
+  if (!animations_initialized) {
+    initAnimations();
+  }
+
+  // Check if animation ID is valid
+  if (animationId < 0 || animationId >= static_cast<int>(animations.size())) {
+    return false;
+  }
+
+  // Try to cast to Image animation
+  animations::Image *imageAnim =
+      dynamic_cast<animations::Image *>(animations[animationId]);
+  if (!imageAnim) {
+    return false; // Not an Image animation
+  }
+
+  imageAnim->setImageDataBase64(base64_data, width, height);
+  return true;
 }
 
 void AnimationManager::updateBrightnessTransition(double deltaTime) {

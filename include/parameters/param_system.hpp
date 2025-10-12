@@ -14,7 +14,7 @@ namespace animations {
 // Forward declaration for Color struct
 struct Color;
 
-enum class ParamKind { Int, Float, Color, Unknown };
+enum class ParamKind { Int, Float, Color, String, Unknown };
 
 // Color structure to represent RGB values
 struct Color {
@@ -81,6 +81,8 @@ template <typename T> constexpr ParamKind kindOf() {
     return ParamKind::Float;
   } else if constexpr (std::is_same_v<T, Color>) {
     return ParamKind::Color;
+  } else if constexpr (std::is_same_v<T, std::string>) {
+    return ParamKind::String;
   } else {
     return ParamKind::Unknown;
   }
@@ -126,6 +128,29 @@ template <> struct Param<Color> {
   constexpr ParamKind kind() const { return ParamKind::Color; }
 };
 
+// Specialization of Param for std::string type (no min/max needed)
+template <> struct Param<std::string> {
+  using value_type = std::string;
+  std::string value;
+  std::string min; // Not used for strings, but kept for template compatibility
+  std::string max; // Not used for strings, but kept for template compatibility
+  std::string_view displayName;
+  std::string_view internalName;
+
+  Param(const std::string &def, const std::string &mn, const std::string &mx,
+        std::string_view display, std::string_view internal)
+      : value(def), min(mn), max(mx), displayName(display),
+        internalName(internal) {}
+
+  // Simplified constructor for strings (no min/max needed)
+  Param(const std::string &def, std::string_view display,
+        std::string_view internal)
+      : value(def), min(""), max(""), displayName(display),
+        internalName(internal) {}
+
+  constexpr ParamKind kind() const { return ParamKind::String; }
+};
+
 struct ParameterView {
   std::string internalName;
   std::string displayName;
@@ -144,6 +169,8 @@ inline std::string kindToString(ParamKind k) {
     return "float";
   case ParamKind::Color:
     return "color";
+  case ParamKind::String:
+    return "string";
   default:
     return "unknown";
   }
@@ -174,9 +201,8 @@ template <typename Derived> struct ParameterSet {
       view.displayName = std::string(p.displayName);
       view.kind = p.kind();
 
-      if constexpr (std::is_same_v<
-                        typename std::decay_t<decltype(p)>::value_type,
-                        Color>) {
+      using VT = typename std::decay_t<decltype(p)>::value_type;
+      if constexpr (std::is_same_v<VT, Color>) {
         // For color parameters
         view.min = 0;        // Not meaningful for colors
         view.max = 0xFFFFFF; // Max hex value
@@ -185,6 +211,12 @@ template <typename Derived> struct ParameterSet {
         char hex_buffer[8];
         snprintf(hex_buffer, sizeof(hex_buffer), "#%06X", p.value.toHex());
         view.colorValue = std::string(hex_buffer);
+      } else if constexpr (std::is_same_v<VT, std::string>) {
+        // For string parameters
+        view.min = 0;
+        view.max = 0;
+        view.value = 0;            // Not meaningful for strings
+        view.colorValue = p.value; // Store the string value
       } else {
         // For numeric parameters
         view.min = static_cast<double>(p.min);
@@ -209,6 +241,10 @@ template <typename Derived> struct ParameterSet {
           uint32_t hex_value = static_cast<uint32_t>(v);
           p.value = Color(hex_value);
           changed = true;
+        } else if constexpr (std::is_same_v<VT, std::string>) {
+          // For string parameters, ignore double values (strings are set via
+          // the string overload) This prevents compilation errors when trying
+          // to set string params with numeric values
         } else {
           // For numeric parameters
           double clamped =
@@ -245,6 +281,10 @@ template <typename Derived> struct ParameterSet {
             p.value = Color(hex_value);
             changed = true;
           }
+        } else if constexpr (std::is_same_v<VT, std::string>) {
+          // For string parameters, set the value directly
+          p.value = std::string(colorHex);
+          changed = true;
         }
       }
     });
@@ -283,5 +323,8 @@ template <typename Derived> struct ParameterSet {
 
 #define PARAM_COLOR(field, defaultVal, display)                                \
   animations::Param<animations::Color> field{defaultVal, display, #field};
+
+#define PARAM_STRING(field, defaultVal, display)                               \
+  animations::Param<std::string> field{defaultVal, display, #field};
 
 } // namespace animations

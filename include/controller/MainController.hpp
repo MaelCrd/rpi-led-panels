@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AnimationManager.h"
+#include "FastNoise/Base64.h"
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
