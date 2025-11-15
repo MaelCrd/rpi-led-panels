@@ -7,6 +7,7 @@
 #include "Animations/GameOfLife.h"
 #include "Animations/HeightMap.h"
 #include "Animations/Image.h"
+#include "Animations/Lightning.h"
 #include "Animations/Matrix.h"
 #include "Animations/Maze.h"
 #include "Animations/Party.h"
@@ -62,7 +63,8 @@ void AnimationManager::initAnimations() {
   animations.push_back(new BirdFlock(matrix));
   animations.push_back(new Image(matrix));
   // animations.push_back(new Spheres(matrix));
-  animations.push_back(new Waves(matrix));
+  // animations.push_back(new Waves(matrix));
+  animations.push_back(new Lightning(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};
