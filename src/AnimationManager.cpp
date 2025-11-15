@@ -11,9 +11,11 @@
 #include "Animations/Maze.h"
 #include "Animations/Party.h"
 #include "Animations/Random.h"
+#include "Animations/Spheres.h"
 #include "Animations/Stars.h"
 #include "Animations/Static.h"
 #include "Animations/Test1.h"
+#include "Animations/Waves.h"
 #include <cstdio> // For snprintf
 
 #include "QRCode.h"
@@ -45,10 +47,10 @@ void AnimationManager::initAnimations() {
   }
 
   // Create animations vector
-  animations.push_back(new Random(matrix));
+  // animations.push_back(new Random(matrix));
   animations.push_back(new HeightMap(matrix));
   animations.push_back(new GameOfLife(matrix, "B3/S23"));
-  animations.push_back(new Static(matrix));
+  // animations.push_back(new Static(matrix));
   animations.push_back(new Clock(matrix));
   animations.push_back(new Party(matrix));
   animations.push_back(new Test1(matrix));
@@ -60,6 +62,7 @@ void AnimationManager::initAnimations() {
   animations.push_back(new BirdFlock(matrix));
   animations.push_back(new Image(matrix));
   // animations.push_back(new Spheres(matrix));
+  animations.push_back(new Waves(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};
@@ -113,7 +116,8 @@ void AnimationManager::run(volatile int *interrupt_received) {
     strcpy(ip, inet_ntoa(((sockaddr_in *)&ifr.ifr_addr)->sin_addr));
     std::cout << "IP Address: " << ip << std::endl;
 
-    std::string text = ip;
+    std::string text = "http://" + std::string(ip);
+    // std::string text = "http://pi.local";
     std::vector<std::vector<bool>> qr;
     generateQR(text, qr);
 
@@ -143,6 +147,9 @@ void AnimationManager::run(volatile int *interrupt_received) {
 
     return;
   }
+
+  setCurrentAnimation(animations.size() - 1); // Start with last animation
+
   /////
   int anim_index = getCurrentAnimation();
   int last_index = anim_index;

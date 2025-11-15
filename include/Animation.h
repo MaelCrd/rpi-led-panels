@@ -119,19 +119,12 @@ public:
 
   // Default implementations - derived classes should override these
   void applyDefaultParameters() override {
-    // Default implementation: reset all parameters to their default values
-    auto tup = params_.tuple();
-    animations::forEachInTuple(tup, [](auto &param) {
-      using ParamType = typename std::decay_t<decltype(param)>::value_type;
-      if constexpr (std::is_arithmetic_v<ParamType>) {
-        // Only do arithmetic for numeric types (int, float)
-        param.value = param.min +
-                      (param.max - param.min) * 0.5; // middle value as fallback
-      } else {
-        // For non-arithmetic types (strings, colors), use the default value
-        param.value = ParamType{}; // Default constructed value
-      }
-    });
+    // Default implementation: parameters are already initialized by their
+    // respective PARAM_* macros (e.g., PARAM_COLOR, PARAM_INT, PARAM_FLOAT)
+    // with the correct default values during member initialization.
+    // We don't need to do anything here - the derived class should override
+    // this method if it wants to set specific default parameter values.
+    // Doing nothing preserves the values set by the PARAM_* macro constructors.
   }
 
   void applyPresetParameters() override {
