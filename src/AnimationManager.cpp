@@ -166,6 +166,20 @@ void AnimationManager::run(volatile int *interrupt_received) {
     if (*interrupt_received)
       break;
 
+    // Check if we should render animation (even when transitioning off, we
+    // continue animation)
+    bool should_animate = target_state || current_brightness > 0.1f;
+
+    if (!should_animate) {
+      // Animation is OFF and we've faded out completely - clear the matrix and
+      // wait
+      matrix->Clear();
+      usleep(30000); // Sleep for 30ms before checking again
+      // Update timing to prevent time jump when turning back on
+      last = std::chrono::system_clock::now();
+      continue;
+    }
+
     auto now = std::chrono::system_clock::now();
     double deltaTime = std::chrono::duration<double>(now - last).count();
     last = now;
@@ -188,6 +202,7 @@ void AnimationManager::run(volatile int *interrupt_received) {
         // Display is on - do fancy fade transition
         auto transition_start = std::chrono::system_clock::now();
         auto transition_last = transition_start;
+        bool first_loop = true;
 
         // Fade out current animation and then fade in next animation
         while (true) {
@@ -198,6 +213,11 @@ void AnimationManager::run(volatile int *interrupt_received) {
           double transition_deltaTime =
               std::chrono::duration<double>(transition_now - transition_last)
                   .count();
+          if (first_loop) {
+            // On first loop, use the main loop deltaTime to avoid time jump
+            transition_deltaTime = deltaTime;
+            first_loop = false;
+          }
           transition_last = transition_now;
 
           // Update brightness transitions during animation change
@@ -236,20 +256,6 @@ void AnimationManager::run(volatile int *interrupt_received) {
       // Switch to the next animation (whether display is on or off)
       current_animation = next_animation;
       last_index = anim_index;
-    }
-
-    // Check if we should render animation (even when transitioning off, we
-    // continue animation)
-    bool should_animate = target_state || current_brightness > 0.1f;
-
-    if (!should_animate) {
-      // Animation is OFF and we've faded out completely - clear the matrix and
-      // wait
-      matrix->Clear();
-      usleep(30000); // Sleep for 30ms before checking again
-      // Update timing to prevent time jump when turning back on
-      last = std::chrono::system_clock::now();
-      continue;
     }
 
     // Set the current brightness (which may be transitioning)
