@@ -4,6 +4,7 @@
 #include "Animation.h"
 #include "parameters/param_system.hpp"
 #include <cmath>
+#include <cstdint>
 
 namespace animations {
 
@@ -26,7 +27,6 @@ struct LightningBranch {
 
 struct LightningBolt {
   std::vector<LightningBranch> branches;
-  Color color;
   bool struck = false;
   float decay = 1.0f;
   int growth_index = 0; // How far the lightning has grown
@@ -36,11 +36,13 @@ class Lightning : public Animation<Lightning, struct LightningParams> {
 private:
   double last_time = 0.0;
   std::vector<LightningBolt> bolts;
+  std::vector<uint8_t> pixel_buffer; // Buffer to store pixel brightness values
 
 public:
   Lightning(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     srand(time(0));
     offscreen_canvas = matrix->CreateFrameCanvas();
+    pixel_buffer.resize(matrix->width() * matrix->height(), 0);
   }
 
   ~Lightning() {}

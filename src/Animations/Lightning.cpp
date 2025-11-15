@@ -13,7 +13,6 @@ void Lightning::animate(double time) {
   if (rand() % 100 < pow(params_.probability.value * 2, 3) * 200 *
                          delta_time) { // chance per second to create a new bolt
     LightningBolt bolt;
-    bolt.color = params_.color.value;
 
     // Create main branch
     LightningBranch main_branch;
@@ -157,10 +156,10 @@ void Lightning::animate(double time) {
     bolts.erase(bolts.begin() + to_remove[i]);
   }
 
-  // Clear canvas
-  offscreen_canvas->Clear();
+  // Clear pixel buffer
+  std::fill(pixel_buffer.begin(), pixel_buffer.end(), 0);
 
-  // Draw the bolts
+  // Draw the bolts into pixel_buffer
   for (auto &bolt : bolts) {
     const int base_brightness = static_cast<int>(255.0 / 13.0 * bolt.decay);
 
@@ -181,22 +180,32 @@ void Lightning::animate(double time) {
           int brightness = base_brightness * 13;
           brightness = std::clamp(brightness, 0, 255);
 
-          const int half_r = (bolt.color.r * brightness) / 510;
-          const int half_g = (bolt.color.g * brightness) / 510;
-          const int half_b = (bolt.color.b * brightness) / 510;
+          const int half_brightness = brightness / 2;
 
           // Draw left, right, top, and bottom pixels with half brightness
           const int x = point.first;
           const int y = point.second;
 
-          if (x > 0)
-            offscreen_canvas->SetPixel(x - 1, y, half_r, half_g, half_b);
-          if (x < width - 1)
-            offscreen_canvas->SetPixel(x + 1, y, half_r, half_g, half_b);
-          if (y > 0)
-            offscreen_canvas->SetPixel(x, y - 1, half_r, half_g, half_b);
-          if (y < height - 1)
-            offscreen_canvas->SetPixel(x, y + 1, half_r, half_g, half_b);
+          if (x > 0) {
+            const int idx = (y * width) + (x - 1);
+            pixel_buffer[idx] = std::max(pixel_buffer[idx],
+                                         static_cast<uint8_t>(half_brightness));
+          }
+          if (x < width - 1) {
+            const int idx = (y * width) + (x + 1);
+            pixel_buffer[idx] = std::max(pixel_buffer[idx],
+                                         static_cast<uint8_t>(half_brightness));
+          }
+          if (y > 0) {
+            const int idx = ((y - 1) * width) + x;
+            pixel_buffer[idx] = std::max(pixel_buffer[idx],
+                                         static_cast<uint8_t>(half_brightness));
+          }
+          if (y < height - 1) {
+            const int idx = ((y + 1) * width) + x;
+            pixel_buffer[idx] = std::max(pixel_buffer[idx],
+                                         static_cast<uint8_t>(half_brightness));
+          }
 
           // Draw half-brightness for lines between points
           if (i + 1 < num_points) {
@@ -212,14 +221,26 @@ void Lightning::animate(double time) {
             int err = dx - dy;
 
             while (x0 != x1 || y0 != y1) {
-              if (x0 > 0)
-                offscreen_canvas->SetPixel(x0 - 1, y0, half_r, half_g, half_b);
-              if (x0 < width - 1)
-                offscreen_canvas->SetPixel(x0 + 1, y0, half_r, half_g, half_b);
-              if (y0 > 0)
-                offscreen_canvas->SetPixel(x0, y0 - 1, half_r, half_g, half_b);
-              if (y0 < height - 1)
-                offscreen_canvas->SetPixel(x0, y0 + 1, half_r, half_g, half_b);
+              if (x0 > 0) {
+                const int idx = (y0 * width) + (x0 - 1);
+                pixel_buffer[idx] = std::max(
+                    pixel_buffer[idx], static_cast<uint8_t>(half_brightness));
+              }
+              if (x0 < width - 1) {
+                const int idx = (y0 * width) + (x0 + 1);
+                pixel_buffer[idx] = std::max(
+                    pixel_buffer[idx], static_cast<uint8_t>(half_brightness));
+              }
+              if (y0 > 0) {
+                const int idx = ((y0 - 1) * width) + x0;
+                pixel_buffer[idx] = std::max(
+                    pixel_buffer[idx], static_cast<uint8_t>(half_brightness));
+              }
+              if (y0 < height - 1) {
+                const int idx = ((y0 + 1) * width) + x0;
+                pixel_buffer[idx] = std::max(
+                    pixel_buffer[idx], static_cast<uint8_t>(half_brightness));
+              }
 
               const int e2 = 2 * err;
               if (e2 > -dy) {
@@ -245,12 +266,10 @@ void Lightning::animate(double time) {
         }
         brightness = std::clamp(brightness, 0, 255);
 
-        const int r = (bolt.color.r * brightness) / 255;
-        const int g = (bolt.color.g * brightness) / 255;
-        const int b = (bolt.color.b * brightness) / 255;
-
         // Draw center pixel at full brightness
-        offscreen_canvas->SetPixel(point.first, point.second, r, g, b);
+        const int center_idx = (point.second * width) + point.first;
+        pixel_buffer[center_idx] = std::max(pixel_buffer[center_idx],
+                                            static_cast<uint8_t>(brightness));
 
         // Draw line to next point if there is one
         if (i + 1 < num_points) {
@@ -266,7 +285,9 @@ void Lightning::animate(double time) {
           int err = dx - dy;
 
           while (x0 != x1 || y0 != y1) {
-            offscreen_canvas->SetPixel(x0, y0, r, g, b);
+            const int idx = (y0 * width) + x0;
+            pixel_buffer[idx] =
+                std::max(pixel_buffer[idx], static_cast<uint8_t>(brightness));
 
             const int e2 = 2 * err;
             if (e2 > -dy) {
@@ -279,6 +300,29 @@ void Lightning::animate(double time) {
             }
           }
         }
+      }
+    }
+  }
+
+  // Clear canvas
+  offscreen_canvas->Clear();
+
+  // Apply color from parameters to all pixels based on brightness in
+  // pixel_buffer
+  const uint8_t color_r = params_.color.value.r;
+  const uint8_t color_g = params_.color.value.g;
+  const uint8_t color_b = params_.color.value.b;
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      const int idx = (y * width) + x;
+      const uint8_t brightness = pixel_buffer[idx];
+
+      if (brightness > 0) {
+        const uint8_t r = (color_r * brightness) / 255;
+        const uint8_t g = (color_g * brightness) / 255;
+        const uint8_t b = (color_b * brightness) / 255;
+        offscreen_canvas->SetPixel(x, y, r, g, b);
       }
     }
   }
