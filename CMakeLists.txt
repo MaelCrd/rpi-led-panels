@@ -15,6 +15,7 @@ set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE) #example if do
 add_subdirectory(deps/FastNoise2)
 
 find_package(oatpp 1.4.0 REQUIRED)
+find_package(CURL REQUIRED) # libcurl4-openssl-dev
 
 
 # Build the RGB matrix library using ExternalProject or custom command
@@ -61,6 +62,7 @@ target_link_libraries(rpi-led-panels PRIVATE
     rgbmatrix
     qrcodegen
     oatpp::oatpp
+    CURL::libcurl
 )
 
 target_include_directories(rpi-led-panels PRIVATE 

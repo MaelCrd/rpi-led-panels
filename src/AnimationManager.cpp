@@ -13,6 +13,7 @@
 #include "Animations/Party.h"
 #include "Animations/Random.h"
 #include "Animations/Spheres.h"
+#include "Animations/SpotifyCurrent.h"
 #include "Animations/Stars.h"
 #include "Animations/Static.h"
 #include "Animations/Test1.h"
@@ -65,6 +66,7 @@ void AnimationManager::initAnimations() {
   // animations.push_back(new Spheres(matrix));
   // animations.push_back(new Waves(matrix));
   animations.push_back(new Lightning(matrix));
+  animations.push_back(new SpotifyCurrent(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};
