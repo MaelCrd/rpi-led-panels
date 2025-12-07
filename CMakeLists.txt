@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(rpi-led-panels)
+
+# Enable Unity Build for faster compilation
+set(CMAKE_UNITY_BUILD ON)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -13,6 +16,9 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
 
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE) #example if don't need the graph tool
 add_subdirectory(deps/FastNoise2)
+
+# Disable Unity Build for FastNoise as it causes build errors
+set_target_properties(FastNoise PROPERTIES UNITY_BUILD OFF)
 
 find_package(oatpp 1.4.0 REQUIRED)
 find_package(CURL REQUIRED) # libcurl4-openssl-dev
@@ -71,4 +77,16 @@ target_include_directories(rpi-led-panels PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/qrcodegen"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/nlohmann_proper"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/FastNoise2/src"
+)
+
+# Precompile common headers to speed up build
+target_precompile_headers(rpi-led-panels PRIVATE
+    <algorithm>
+    <cmath>
+    <cstdint>
+    <cstdlib>
+    <iostream>
+    <string>
+    <vector>
+    <unistd.h>
 )

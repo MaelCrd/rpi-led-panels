@@ -1,6 +1,3 @@
-#ifndef UTILS_H
-#define UTILS_H
-
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -149,5 +146,3 @@ void hsvToRgb(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b) {
 }
 
 } // namespace utils
-
-#endif // UTILS_H

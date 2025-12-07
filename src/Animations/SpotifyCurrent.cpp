@@ -391,7 +391,7 @@ void SpotifyCurrent::animate(double time) {
   // Handle crossfade animation
   if (is_fading && fade_progress < 1.0) {
     display_covers(fade_progress);
-    matrix->SwapOnVSync(offscreen_canvas);
+    offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
     fade_progress += (time - last_animate_time) *
                      0.5; // Adjust fade speed here (0.5 = 2 second fade)
     last_animate_time = time;
@@ -399,7 +399,7 @@ void SpotifyCurrent::animate(double time) {
     if (is_fading) {
       fade_progress = 1.0;
       display_covers(fade_progress);
-      matrix->SwapOnVSync(offscreen_canvas);
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
       is_fading = false;
       prev_track_data = pending_track_data;
     }
@@ -414,9 +414,9 @@ void SpotifyCurrent::animate(double time) {
       new_track = pending_track_data;
     }
 
-    if (prev_track_data.id != new_track.id) {
-      // std::cout << "Now playing: " << new_track.name << " by "
-      //           << new_track.artists << "\n";
+    if (prev_track_data.id != new_track.id && !is_fading) {
+      std::cout << "Now playing: " << new_track.name << " by "
+                << new_track.artists << "\n";
 
       // Start crossfade
       pending_track_data = new_track;
@@ -425,6 +425,7 @@ void SpotifyCurrent::animate(double time) {
       offscreen_canvas->Clear();
 
       // Draw track name and artists
+
       int x_offset = 12 + 64 + 10;
       int y_offset = 12 + 20;
       rgb_matrix::DrawText(offscreen_canvas, font, x_offset, y_offset + 10,
@@ -433,8 +434,11 @@ void SpotifyCurrent::animate(double time) {
       rgb_matrix::DrawText(offscreen_canvas, font, x_offset, y_offset + 30,
                            rgb_matrix::Color(200, 200, 200), nullptr,
                            pending_track_data.artists.c_str());
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
     }
   }
+
+  Sleep(50); // Small sleep to prevent high CPU usage
 }
 
 } // namespace animations
