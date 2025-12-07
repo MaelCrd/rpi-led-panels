@@ -438,7 +438,7 @@ void SpotifyCurrent::animate(double time) {
     }
   }
 
-  Sleep(50); // Small sleep to prevent high CPU usage
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 } // namespace animations
