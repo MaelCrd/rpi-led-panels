@@ -132,6 +132,17 @@ SpotifyCurrent::SpotifyCurrent(rgb_matrix::RGBMatrix *matrix)
   font.LoadFont("../deps/matrix/fonts/6x12.bdf");
 }
 
+SpotifyCurrent::~SpotifyCurrent() {
+  stop_thread = true;
+  if (fetch_thread.joinable()) {
+    fetch_thread.join();
+  }
+  if (g_curl) {
+    curl_easy_cleanup(g_curl);
+    g_curl = nullptr;
+  }
+}
+
 bool SpotifyCurrent::init_spotify() {
   if (!client_id || !client_secret) {
     std::cerr << "Client ID or Secret missing.\n";
@@ -174,7 +185,31 @@ bool SpotifyCurrent::init_spotify() {
     }
   }
 
+  // Start the fetch thread
+  if (!fetch_thread.joinable()) {
+    fetch_thread = std::thread(&SpotifyCurrent::fetch_thread_worker, this);
+  }
+
   return !g_access_token.empty();
+}
+
+void SpotifyCurrent::fetch_thread_worker() {
+  while (!stop_thread) {
+    TrackData new_track_data;
+    if (fetch_track_info(new_track_data)) {
+      std::lock_guard<std::mutex> lock(track_data_mutex);
+      // Only update if track ID changed
+      if (new_track_data.id != pending_track_data.id) {
+        pending_track_data = std::move(new_track_data);
+        new_track_available = true;
+      }
+    }
+
+    // Sleep for 2 seconds, but check stop_thread frequently
+    for (int i = 0; i < 20 && !stop_thread; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
 }
 
 bool SpotifyCurrent::download_image(const std::string &url,
@@ -353,35 +388,41 @@ void SpotifyCurrent::animate(double time) {
     }
   }
 
+  // Handle crossfade animation
   if (is_fading && fade_progress < 1.0) {
     display_covers(fade_progress);
     matrix->SwapOnVSync(offscreen_canvas);
-    fade_progress +=
-        (time - last_animate_time) * 0.05; // Adjust fade speed here
+    fade_progress += (time - last_animate_time) *
+                     0.5; // Adjust fade speed here (0.5 = 2 second fade)
+    last_animate_time = time;
   } else {
-    fade_progress = 1.0;
     if (is_fading) {
+      fade_progress = 1.0;
       display_covers(fade_progress);
       matrix->SwapOnVSync(offscreen_canvas);
       is_fading = false;
+      prev_track_data = pending_track_data;
     }
-    prev_track_data = pending_track_data;
+    last_animate_time = time;
   }
 
-  if (time - last_animate_time <= 2.0) {
-    return;
-  }
-  last_animate_time = time;
+  // Check if new track is available from the fetch thread
+  if (new_track_available.exchange(false)) {
+    TrackData new_track;
+    {
+      std::lock_guard<std::mutex> lock(track_data_mutex);
+      new_track = pending_track_data;
+    }
 
-  if (fetch_track_info(pending_track_data)) {
-    if (prev_track_data.id != pending_track_data.id) {
-      // std::cout << "Now playing: " << pending_track_data.name << " by "
-      //           << pending_track_data.artists << "\n";
-      offscreen_canvas->Clear();
-      //
+    if (prev_track_data.id != new_track.id) {
+      // std::cout << "Now playing: " << new_track.name << " by "
+      //           << new_track.artists << "\n";
 
+      // Start crossfade
+      pending_track_data = new_track;
       fade_progress = 0.0;
       is_fading = true;
+      offscreen_canvas->Clear();
 
       // Draw track name and artists
       int x_offset = 12 + 64 + 10;
@@ -392,10 +433,6 @@ void SpotifyCurrent::animate(double time) {
       rgb_matrix::DrawText(offscreen_canvas, font, x_offset, y_offset + 30,
                            rgb_matrix::Color(200, 200, 200), nullptr,
                            pending_track_data.artists.c_str());
-
-    } else {
-      // std::cout << "Track unchanged: " << pending_track_data.name << " by "
-      //           << pending_track_data.artists << "\n";
     }
   }
 }

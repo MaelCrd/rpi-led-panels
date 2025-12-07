@@ -3,14 +3,17 @@
 
 #include "Animation.h"
 #include "parameters/param_system.hpp"
+#include <atomic>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <curl/curl.h>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace animations {
@@ -60,14 +63,22 @@ private:
 
   double last_animate_time = -1.0;
 
+  // Thread management
+  std::thread fetch_thread;
+  std::mutex track_data_mutex;
+  std::atomic<bool> stop_thread{false};
+  std::atomic<bool> new_track_available{false};
+
   bool init_spotify();
   // Helper functions for the worker thread
   bool fetch_track_info(TrackData &out_data);
   bool download_image(const std::string &url, std::vector<uint8_t> &out_data,
                       int &out_width, int &out_height);
+  void fetch_thread_worker();
 
 public:
   SpotifyCurrent(rgb_matrix::RGBMatrix *matrix);
+  ~SpotifyCurrent();
 
   void animate(double time) override;
 
