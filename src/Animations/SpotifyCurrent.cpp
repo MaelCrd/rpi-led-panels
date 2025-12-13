@@ -409,30 +409,59 @@ void SpotifyCurrent::animate(double time) {
       new_track = pending_track_data;
     }
 
+    const int x_offset = 12 + 64 + 10;
+    const int y_offset = 12 + 18;
+    const int y_offset_title = y_offset + 10;
+    const int y_offset_artists = y_offset + 30;
     if (prev_track_data.id != new_track.id && !is_fading) {
       /*std::cout << "Now playing: " << new_track.name << " by "
                 << new_track.artists << "\n";*/
 
-      // Start crossfade
-      pending_track_data = new_track;
-      fade_progress = 0.0;
-      is_fading = true;
+      // If we don't have a previous cover (first track), display the cover
+      // immediately instead of trying to crossfade from an empty image.
+      if (prev_track_data.cover_rgb_data.empty()) {
+        prev_track_data = new_track;
+        pending_track_data = new_track;
+        fade_progress = 1.0;
+        is_fading = false;
 
-      int x_offset = 12 + 64 + 10;
-      int y_offset = 12 + 20;
+        // Draw the cover immediately
+        offscreen_canvas->Clear();
+        display_covers(1.0f);
 
-      // Clear the text area
-      offscreen_canvas->SubFill(x_offset, y_offset, matrix->width() - x_offset,
-                                matrix->height() / 2, 0, 0, 0);
+        // Clear the text area
+        offscreen_canvas->SubFill(x_offset, y_offset,
+                                  matrix->width() - x_offset,
+                                  matrix->height() / 2, 0, 0, 0);
 
-      // Draw track name and artists
-      rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
-                           y_offset + 10, title_color, nullptr,
-                           pending_track_data.name.c_str());
-      rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
-                           y_offset + 30, artists_color, nullptr,
-                           pending_track_data.artists.c_str());
-      // offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+        // Draw track name and artists
+        rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
+                             y_offset_title, title_color, nullptr,
+                             pending_track_data.name.c_str());
+        rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
+                             y_offset_artists, artists_color, nullptr,
+                             pending_track_data.artists.c_str());
+
+        matrix->SwapOnVSync(offscreen_canvas);
+      } else {
+        // Start crossfade
+        pending_track_data = new_track;
+        fade_progress = 0.0;
+        is_fading = true;
+
+        // Clear the text area
+        offscreen_canvas->SubFill(x_offset, y_offset,
+                                  matrix->width() - x_offset,
+                                  matrix->height() / 2, 0, 0, 0);
+
+        // Draw track name and artists
+        rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
+                             y_offset_title, title_color, nullptr,
+                             pending_track_data.name.c_str());
+        rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
+                             y_offset_artists, artists_color, nullptr,
+                             pending_track_data.artists.c_str());
+      }
     }
   }
 
