@@ -30,7 +30,7 @@ class SpotifyCurrent : public Animation<SpotifyCurrent, SpotifyCurrentParams> {
 private:
   // Fade configuration
   static constexpr double COVER_FADE_DURATION =
-      2.0; // Duration in seconds for cover fade-in
+      0.7; // Duration in seconds for cover fade-in
 
   const char *client_id = "REMOVED_SECRET";
   const char *client_secret = "REMOVED_SECRET";
@@ -114,7 +114,7 @@ protected:
   rgb_matrix::Font title_font;
   rgb_matrix::Font artists_font;
   rgb_matrix::Color title_color = rgb_matrix::Color(255, 255, 255);
-  rgb_matrix::Color artists_color = rgb_matrix::Color(200, 200, 200);
+  rgb_matrix::Color artists_color = rgb_matrix::Color(150, 150, 150);
 };
 } // namespace animations
 

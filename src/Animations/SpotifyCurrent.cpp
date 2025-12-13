@@ -357,19 +357,20 @@ void SpotifyCurrent::display_covers(float fade_progress) {
 
   int x_offset = 12;
   int y_offset = 12;
+  // float inv_progress = 1.0f - fade_progress;
+  // Slow start and end to the fade
+  float inv_progress = 1.0f - (fade_progress * fade_progress *
+                               (3 - 2 * fade_progress)); // Smoothstep
 
   for (int y = 0; y < prev_track_data.cover_height; ++y) {
     for (int x = 0; x < prev_track_data.cover_width; ++x) {
       int index = (y * prev_track_data.cover_width + x) * 3;
-      uint8_t r =
-          prev_track_data.cover_rgb_data[index] * (1.0 - fade_progress) +
-          pending_track_data.cover_rgb_data[index] * fade_progress;
-      uint8_t g =
-          prev_track_data.cover_rgb_data[index + 1] * (1.0 - fade_progress) +
-          pending_track_data.cover_rgb_data[index + 1] * fade_progress;
-      uint8_t b =
-          prev_track_data.cover_rgb_data[index + 2] * (1.0 - fade_progress) +
-          pending_track_data.cover_rgb_data[index + 2] * fade_progress;
+      uint8_t r = prev_track_data.cover_rgb_data[index] * inv_progress +
+                  pending_track_data.cover_rgb_data[index] * fade_progress;
+      uint8_t g = prev_track_data.cover_rgb_data[index + 1] * inv_progress +
+                  pending_track_data.cover_rgb_data[index + 1] * fade_progress;
+      uint8_t b = prev_track_data.cover_rgb_data[index + 2] * inv_progress +
+                  pending_track_data.cover_rgb_data[index + 2] * fade_progress;
       offscreen_canvas->SetPixel(x + x_offset, y + y_offset, r, g, b);
     }
   }
@@ -480,7 +481,7 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   const int cover_size = 64;
   const int cover_center_y = cover_y + cover_size / 2;
   const int text_x = cover_x + cover_size + 10;
-  const int max_text_width = matrix->width() - text_x;
+  const int max_text_width = matrix->width() - 12 - text_x;
 
   // Clear the text area
   offscreen_canvas->SubFill(text_x, cover_y, matrix->width() - text_x,
@@ -494,8 +495,14 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   // Calculate total height of text block (with 6px spacing between title and
   // artists)
   int spacing = 6;
-  int title_height = title_lines.size() * title_font.height();
-  int artists_height = artists_lines.size() * artists_font.height();
+  int line_spacing = 2; // Reduced spacing between lines within title/artists
+  int title_height =
+      title_lines.size() * title_font.height() -
+      (title_lines.size() > 1 ? (title_lines.size() - 1) * line_spacing : 0);
+  int artists_height =
+      artists_lines.size() * artists_font.height() -
+      (artists_lines.size() > 1 ? (artists_lines.size() - 1) * line_spacing
+                                : 0);
   int total_text_height = title_height + spacing + artists_height;
 
   // Calculate starting Y position to center text vertically with the cover
@@ -506,7 +513,7 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   for (const auto &line : title_lines) {
     rgb_matrix::DrawText(offscreen_canvas, title_font, text_x, title_y,
                          title_color, nullptr, line.c_str());
-    title_y += title_font.height();
+    title_y += title_font.height() - line_spacing;
   }
 
   // Draw artists (with spacing after title)
@@ -515,7 +522,7 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   for (const auto &line : artists_lines) {
     rgb_matrix::DrawText(offscreen_canvas, artists_font, text_x, artists_y,
                          artists_color, nullptr, line.c_str());
-    artists_y += artists_font.height();
+    artists_y += artists_font.height() - line_spacing;
   }
 }
 
@@ -533,8 +540,9 @@ void SpotifyCurrent::animate(double time) {
   if (is_fading && fade_progress < 1.0) {
     display_covers(fade_progress);
     matrix->SwapOnVSync(offscreen_canvas);
-    fade_progress += (time - last_animate_time) *
-                     0.5; // Adjust fade speed here (0.5 = 2 second fade)
+    fade_progress +=
+        (time - last_animate_time) /
+        COVER_FADE_DURATION; // Adjust fade speed here (0.5 = 2 second fade)
     last_animate_time = time;
   } else {
     if (is_fading) {
