@@ -67,8 +67,8 @@ void AnimationManager::initAnimations() {
   // animations.push_back(new Spheres(matrix));
   // animations.push_back(new Waves(matrix));
   animations.push_back(new Lightning(matrix));
-  animations.push_back(new SpotifyCurrent(matrix));
   animations.push_back(new ChristmasTree(matrix));
+  animations.push_back(new SpotifyCurrent(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};

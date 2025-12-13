@@ -77,7 +77,14 @@ private:
   void fetch_thread_worker();
 
 public:
-  SpotifyCurrent(rgb_matrix::RGBMatrix *matrix);
+  SpotifyCurrent(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+    offscreen_canvas = matrix->CreateFrameCanvas();
+    title_font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+    artists_font.LoadFont("../deps/matrix/fonts/6x10.bdf");
+    // font.LoadFont("../fonts/verdana-8pt.bdf");
+    // font.LoadFont("../fonts/l_10646-8pt.bdf"); // ok
+  }
+
   ~SpotifyCurrent();
 
   void animate(double time) override;
@@ -98,7 +105,10 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
-  rgb_matrix::Font font;
+  rgb_matrix::Font title_font;
+  rgb_matrix::Font artists_font;
+  rgb_matrix::Color title_color = rgb_matrix::Color(255, 255, 255);
+  rgb_matrix::Color artists_color = rgb_matrix::Color(200, 200, 200);
 };
 } // namespace animations
 

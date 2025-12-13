@@ -1,6 +1,7 @@
 #include "Animations/SpotifyCurrent.h"
 #include "../deps/stb_image.h"
 #include <cerrno>
+#include <cstddef>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -124,12 +125,6 @@ bool refresh_user_access_token(const std::string &refresh_token,
 
   curl_easy_cleanup(refresh_curl);
   return !out_access_token.empty();
-}
-
-SpotifyCurrent::SpotifyCurrent(rgb_matrix::RGBMatrix *matrix)
-    : Animation(matrix) {
-  offscreen_canvas = matrix->CreateFrameCanvas();
-  font.LoadFont("../deps/matrix/fonts/6x12.bdf");
 }
 
 SpotifyCurrent::~SpotifyCurrent() {
@@ -391,7 +386,7 @@ void SpotifyCurrent::animate(double time) {
   // Handle crossfade animation
   if (is_fading && fade_progress < 1.0) {
     display_covers(fade_progress);
-    offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+    matrix->SwapOnVSync(offscreen_canvas);
     fade_progress += (time - last_animate_time) *
                      0.5; // Adjust fade speed here (0.5 = 2 second fade)
     last_animate_time = time;
@@ -399,7 +394,7 @@ void SpotifyCurrent::animate(double time) {
     if (is_fading) {
       fade_progress = 1.0;
       display_covers(fade_progress);
-      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+      matrix->SwapOnVSync(offscreen_canvas);
       is_fading = false;
       prev_track_data = pending_track_data;
     }
@@ -415,30 +410,33 @@ void SpotifyCurrent::animate(double time) {
     }
 
     if (prev_track_data.id != new_track.id && !is_fading) {
-      std::cout << "Now playing: " << new_track.name << " by "
-                << new_track.artists << "\n";
+      /*std::cout << "Now playing: " << new_track.name << " by "
+                << new_track.artists << "\n";*/
 
       // Start crossfade
       pending_track_data = new_track;
       fade_progress = 0.0;
       is_fading = true;
-      offscreen_canvas->Clear();
-
-      // Draw track name and artists
 
       int x_offset = 12 + 64 + 10;
       int y_offset = 12 + 20;
-      rgb_matrix::DrawText(offscreen_canvas, font, x_offset, y_offset + 10,
-                           rgb_matrix::Color(255, 255, 255), nullptr,
+
+      // Clear the text area
+      offscreen_canvas->SubFill(x_offset, y_offset, matrix->width() - x_offset,
+                                matrix->height() / 2, 0, 0, 0);
+
+      // Draw track name and artists
+      rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
+                           y_offset + 10, title_color, nullptr,
                            pending_track_data.name.c_str());
-      rgb_matrix::DrawText(offscreen_canvas, font, x_offset, y_offset + 30,
-                           rgb_matrix::Color(200, 200, 200), nullptr,
+      rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
+                           y_offset + 30, artists_color, nullptr,
                            pending_track_data.artists.c_str());
-      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+      // offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
     }
   }
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // std::this_thread::sleep_for(std::chrono::milliseconds(200));
 }
 
 } // namespace animations
