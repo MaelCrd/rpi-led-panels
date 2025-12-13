@@ -2,6 +2,7 @@
 #include "Animation.h"
 #include "Animations/Atom.h"
 #include "Animations/BirdFlock.h"
+#include "Animations/ChristmasTree.h"
 #include "Animations/Clock.h"
 #include "Animations/DropletCircles.h"
 #include "Animations/GameOfLife.h"
@@ -67,6 +68,7 @@ void AnimationManager::initAnimations() {
   // animations.push_back(new Waves(matrix));
   animations.push_back(new Lightning(matrix));
   animations.push_back(new SpotifyCurrent(matrix));
+  animations.push_back(new ChristmasTree(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};
