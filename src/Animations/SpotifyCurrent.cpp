@@ -1,10 +1,12 @@
 #include "Animations/SpotifyCurrent.h"
 #include "../deps/stb_image.h"
+#include <algorithm>
 #include <cerrno>
 #include <cstddef>
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 namespace animations {
 
@@ -373,6 +375,150 @@ void SpotifyCurrent::display_covers(float fade_progress) {
   }
 }
 
+std::vector<std::string> SpotifyCurrent::wrap_text(const std::string &text,
+                                                   const rgb_matrix::Font &font,
+                                                   int max_width,
+                                                   int max_lines) {
+  std::vector<std::string> lines;
+  std::istringstream words_stream(text);
+  std::string word;
+  std::string current_line;
+  bool text_truncated = false;
+
+  while (words_stream >> word) {
+    std::string test_line =
+        current_line.empty() ? word : current_line + " " + word;
+
+    // Measure the width of the test line
+    int line_width = 0;
+    for (char c : test_line) {
+      line_width += font.CharacterWidth(c);
+    }
+
+    if (line_width <= max_width) {
+      // The word fits on the current line
+      current_line = test_line;
+    } else {
+      // The word doesn't fit, start a new line
+      if (!current_line.empty()) {
+        lines.push_back(current_line);
+        if (lines.size() >= max_lines) {
+          text_truncated = true;
+          break;
+        }
+      }
+      current_line = word;
+
+      // Check if even a single word is too long
+      int word_width = 0;
+      for (char c : word) {
+        word_width += font.CharacterWidth(c);
+      }
+      if (word_width > max_width) {
+        // Word is too long, truncate it
+        current_line.clear();
+        int accumulated_width = 0;
+        for (size_t i = 0; i < word.size(); ++i) {
+          int char_width = font.CharacterWidth(word[i]);
+          if (accumulated_width + char_width >
+              max_width - font.CharacterWidth('.') * 3) {
+            current_line += "...";
+            break;
+          }
+          current_line += word[i];
+          accumulated_width += char_width;
+        }
+        lines.push_back(current_line);
+        if (lines.size() >= max_lines) {
+          text_truncated = true;
+          break;
+        }
+        current_line.clear();
+      }
+    }
+  }
+
+  // Add the last line if it's not empty
+  if (!current_line.empty() && lines.size() < max_lines) {
+    lines.push_back(current_line);
+  } else if (!current_line.empty() && lines.size() >= max_lines) {
+    text_truncated = true;
+  }
+
+  // If text was truncated, add ellipsis to the last line
+  if (text_truncated && !lines.empty()) {
+    std::string &last_line = lines.back();
+
+    // Remove characters from the end until "..." fits
+    int ellipsis_width = font.CharacterWidth('.') * 3;
+    int current_width = 0;
+    for (char c : last_line) {
+      current_width += font.CharacterWidth(c);
+    }
+
+    while (current_width + ellipsis_width > max_width && !last_line.empty()) {
+      char removed = last_line.back();
+      last_line.pop_back();
+      current_width -= font.CharacterWidth(removed);
+    }
+
+    // Trim any trailing spaces before adding ellipsis
+    while (!last_line.empty() && last_line.back() == ' ') {
+      last_line.pop_back();
+    }
+
+    last_line += "...";
+  }
+
+  return lines;
+}
+
+void SpotifyCurrent::render_track_text(const TrackData &track_data) {
+  // Calculate positions
+  const int cover_x = 12;
+  const int cover_y = 12;
+  const int cover_size = 64;
+  const int cover_center_y = cover_y + cover_size / 2;
+  const int text_x = cover_x + cover_size + 10;
+  const int max_text_width = matrix->width() - text_x;
+
+  // Clear the text area
+  offscreen_canvas->SubFill(text_x, cover_y, matrix->width() - text_x,
+                            cover_size, 0, 0, 0);
+
+  // Wrap text to get the lines
+  auto title_lines = wrap_text(track_data.name, title_font, max_text_width, 3);
+  auto artists_lines =
+      wrap_text(track_data.artists, artists_font, max_text_width, 3);
+
+  // Calculate total height of text block (with 6px spacing between title and
+  // artists)
+  int spacing = 6;
+  int title_height = title_lines.size() * title_font.height();
+  int artists_height = artists_lines.size() * artists_font.height();
+  int total_text_height = title_height + spacing + artists_height;
+
+  // Calculate starting Y position to center text vertically with the cover
+  int text_start_y = cover_center_y - (total_text_height / 2);
+
+  // Draw track name
+  int title_y = text_start_y + title_font.baseline();
+  for (const auto &line : title_lines) {
+    rgb_matrix::DrawText(offscreen_canvas, title_font, text_x, title_y,
+                         title_color, nullptr, line.c_str());
+    title_y += title_font.height();
+  }
+
+  // Draw artists (with spacing after title)
+  int artists_y =
+      text_start_y + title_height + spacing + artists_font.baseline();
+  for (const auto &line : artists_lines) {
+    rgb_matrix::DrawText(offscreen_canvas, artists_font, text_x, artists_y,
+                         artists_color, nullptr, line.c_str());
+    artists_y += artists_font.height();
+  }
+}
+
 void SpotifyCurrent::animate(double time) {
   if (!initialized) {
     if (init_spotify()) {
@@ -409,10 +555,16 @@ void SpotifyCurrent::animate(double time) {
       new_track = pending_track_data;
     }
 
-    const int x_offset = 12 + 64 + 10;
-    const int y_offset = 12 + 18;
-    const int y_offset_title = y_offset + 10;
-    const int y_offset_artists = y_offset + 30;
+    // Cover is 64x64 at position (12, 12), so it spans from y=12 to y=76
+    const int cover_x = 12;
+    const int cover_y = 12;
+    const int cover_size = 64;
+    const int cover_center_y = cover_y + cover_size / 2; // y = 44
+
+    const int text_x = cover_x + cover_size + 10; // x = 86
+    const int max_text_width =
+        matrix->width() - text_x - 5; // Leave 5px margin on the right
+
     if (prev_track_data.id != new_track.id && !is_fading) {
       /*std::cout << "Now playing: " << new_track.name << " by "
                 << new_track.artists << "\n";*/
@@ -429,18 +581,8 @@ void SpotifyCurrent::animate(double time) {
         offscreen_canvas->Clear();
         display_covers(1.0f);
 
-        // Clear the text area
-        offscreen_canvas->SubFill(x_offset, y_offset,
-                                  matrix->width() - x_offset,
-                                  matrix->height() / 2, 0, 0, 0);
-
-        // Draw track name and artists
-        rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
-                             y_offset_title, title_color, nullptr,
-                             pending_track_data.name.c_str());
-        rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
-                             y_offset_artists, artists_color, nullptr,
-                             pending_track_data.artists.c_str());
+        // Render track text
+        render_track_text(pending_track_data);
 
         matrix->SwapOnVSync(offscreen_canvas);
       } else {
@@ -449,18 +591,8 @@ void SpotifyCurrent::animate(double time) {
         fade_progress = 0.0;
         is_fading = true;
 
-        // Clear the text area
-        offscreen_canvas->SubFill(x_offset, y_offset,
-                                  matrix->width() - x_offset,
-                                  matrix->height() / 2, 0, 0, 0);
-
-        // Draw track name and artists
-        rgb_matrix::DrawText(offscreen_canvas, title_font, x_offset,
-                             y_offset_title, title_color, nullptr,
-                             pending_track_data.name.c_str());
-        rgb_matrix::DrawText(offscreen_canvas, artists_font, x_offset,
-                             y_offset_artists, artists_color, nullptr,
-                             pending_track_data.artists.c_str());
+        // Render track text
+        render_track_text(pending_track_data);
       }
     }
   }

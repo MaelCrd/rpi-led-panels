@@ -91,6 +91,12 @@ public:
 
   void display_covers(float fade_progress);
 
+  std::vector<std::string> wrap_text(const std::string &text,
+                                     const rgb_matrix::Font &font,
+                                     int max_width, int max_lines);
+
+  void render_track_text(const TrackData &track_data);
+
   std::string name() const override { return "SpotifyCurrent"; }
 
   // Override mode parameter methods - Static has no parameters so all modes are
