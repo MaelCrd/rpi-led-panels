@@ -13,6 +13,7 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <sys/types.h>
 #include <thread>
 #include <vector>
 
@@ -75,11 +76,14 @@ private:
 
   float displayed_progress_ratio = 0.0f;
 
-  // Thread management
-  std::thread fetch_thread;
+  // Worker process management (was a thread before)
+  pid_t fetch_pid = -1;
   std::mutex track_data_mutex;
   std::atomic<bool> stop_thread{false};
   std::atomic<bool> new_track_available{false};
+  // IPC pipe fds: parent will keep read_fd, child will use write_fd
+  int ipc_pipe_read_fd = -1;
+  int ipc_pipe_write_fd = -1;
 
   bool init_spotify();
   // Helper functions for the worker thread
@@ -87,6 +91,8 @@ private:
   bool download_image(const std::string &url, std::vector<uint8_t> &out_data,
                       int &out_width, int &out_height);
   void fetch_thread_worker();
+  // Read a single IPC update (if available) from child process pipe
+  bool read_ipc_update();
 
 public:
   SpotifyCurrent(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {

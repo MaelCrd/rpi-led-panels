@@ -1,17 +1,31 @@
 #include "Animations/SpotifyCurrent.h"
 #include "../deps/stb_image.h"
 #include <algorithm>
+#include <arpa/inet.h>
 #include <cerrno>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
+#include <signal.h>
 #include <sstream>
+#include <sys/resource.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace animations {
 
 using json = nlohmann::json;
+
+// Child process stop flag (set by signal handler in the child)
+static volatile sig_atomic_t child_stop = 0;
+
+static void child_sigterm_handler(int) { child_stop = 1; }
 
 // Minimal Base64 encoder
 static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -132,8 +146,12 @@ bool refresh_user_access_token(const std::string &refresh_token,
 
 SpotifyCurrent::~SpotifyCurrent() {
   stop_thread = true;
-  if (fetch_thread.joinable()) {
-    fetch_thread.join();
+  if (fetch_pid > 0) {
+    // Ask the child process to terminate
+    kill(fetch_pid, SIGTERM);
+    int status = 0;
+    waitpid(fetch_pid, &status, 0);
+    fetch_pid = -1;
   }
   if (g_curl) {
     curl_easy_cleanup(g_curl);
@@ -178,41 +196,297 @@ bool SpotifyCurrent::init_spotify() {
       write_cached_token(token_cache_path, refreshed_token);
       if (!new_refresh_token.empty() &&
           new_refresh_token != this->g_refresh_token_str) {
-        std::cerr << "New refresh token received.\n";
       }
     }
   }
 
   // Start the fetch thread
-  if (!fetch_thread.joinable()) {
-    fetch_thread = std::thread(&SpotifyCurrent::fetch_thread_worker, this);
+  if (fetch_pid <= 0) {
+    // Create an IPC pipe for child -> parent updates
+    int pipefd[2];
+    if (pipe(pipefd) == 0) {
+      this->ipc_pipe_read_fd = pipefd[0];
+      this->ipc_pipe_write_fd = pipefd[1];
+    } else {
+      std::cerr << "init_spotify: pipe() failed: " << errno << "\n";
+      this->ipc_pipe_read_fd = -1;
+      this->ipc_pipe_write_fd = -1;
+    }
+    pid_t pid = fork();
+    if (pid < 0) {
+      std::cerr << "Failed to fork spotify fetch process\n";
+    } else if (pid == 0) {
+      // Child process: install signal handler and run worker
+      signal(SIGTERM, child_sigterm_handler);
+      // Reinitialize curl in the child process to avoid using parent's CURL
+      if (this->g_curl) {
+        curl_easy_cleanup(this->g_curl);
+        this->g_curl = nullptr;
+      }
+      this->g_curl = curl_easy_init();
+      if (this->g_curl)
+        curl_easy_setopt(this->g_curl, CURLOPT_WRITEFUNCTION, write_callback);
+      else
+        std::cerr << "Spotify child: curl_easy_init() failed\n";
+      // Lower the child's scheduling priority to reduce CPU impact
+      if (setpriority(PRIO_PROCESS, 0, 10) != 0) {
+        std::cerr << "Spotify child: setpriority failed errno=" << errno
+                  << "\n";
+      } else {
+      }
+
+      // Try to create a cgroup v2 for this child and limit CPU to ~1%.
+      // cpu.max format: "max period_us" - use period 100000 (100ms) and max
+      // 1000 (1%).
+      const char *cgroup_root = "/sys/fs/cgroup";
+      struct stat st;
+      if (stat(cgroup_root, &st) == 0 && S_ISDIR(st.st_mode)) {
+        std::string cg_parent = std::string(cgroup_root) + "/rpi_led_panels";
+        // Create parent dir if needed
+        if (mkdir(cg_parent.c_str(), 0755) != 0 && errno != EEXIST) {
+          std::cerr << "Spotify child: mkdir parent cgroup failed errno="
+                    << errno << "\n";
+        }
+        std::string cg_dir = cg_parent + "/spotify_" + std::to_string(getpid());
+        if (mkdir(cg_dir.c_str(), 0755) != 0 && errno != EEXIST) {
+          std::cerr << "Spotify child: mkdir cgroup failed errno=" << errno
+                    << "\n";
+        } else {
+          std::string cpu_max_path = cg_dir + "/cpu.max";
+          int fd = open(cpu_max_path.c_str(), O_WRONLY | O_CLOEXEC);
+          if (fd >= 0) {
+            const char *val = "5000 100000"; // ~1% (1000/100000)
+            ssize_t w = write(fd, val, strlen(val));
+            if (w < 0) {
+              std::cerr << "Spotify child: write cpu.max failed errno=" << errno
+                        << "\n";
+            } else {
+              (void)val;
+            }
+            close(fd);
+          } else {
+            std::cerr << "Spotify child: open cpu.max failed errno=" << errno
+                      << "\n";
+            // If cpu.max doesn't exist (ENOENT), attempt to enable the cpu
+            // controller in the parent cgroup by writing "+cpu\n" to
+            // cgroup.subtree_control.
+            if (errno == ENOENT) {
+              std::string parent_subtree =
+                  cg_parent + "/cgroup.subtree_control";
+              int sfd = open(parent_subtree.c_str(), O_WRONLY | O_CLOEXEC);
+              if (sfd >= 0) {
+                const char *enable = "+cpu\n";
+                if (write(sfd, enable, strlen(enable)) < 0) {
+                  std::cerr << "Spotify child: write to " << parent_subtree
+                            << " failed errno=" << errno << "\n";
+                } else {
+                  (void)parent_subtree;
+                }
+                close(sfd);
+                // Try opening cpu.max again
+                struct stat statbuf;
+                if (stat(cpu_max_path.c_str(), &statbuf) == 0) {
+                  if (S_ISDIR(statbuf.st_mode)) {
+                    std::cerr << "Spotify child: cpu.max exists but is a "
+                                 "directory (EISDIR).\n";
+                    std::cerr
+                        << "Please remove the mistaken directory and ensure "
+                           "cgroup v2 subtree control is enabled (echo +cpu > "
+                           "<parent>/cgroup.subtree_control).\n";
+                  } else {
+                    int fd = open(cpu_max_path.c_str(), O_WRONLY | O_CLOEXEC);
+                    if (fd >= 0) {
+                      const char *val = "1000 100000"; // ~1% (1000/100000)
+                      ssize_t w = write(fd, val, strlen(val));
+                      if (w < 0) {
+                        std::cerr << "Spotify child: write cpu.max failed: "
+                                  << strerror(errno) << "\n";
+                      } else {
+                        (void)val;
+                      }
+                      close(fd);
+                    } else {
+                      std::cerr << "Spotify child: open cpu.max failed: "
+                                << strerror(errno) << "\n";
+                    }
+                  }
+                } else {
+                  // stat failed - path probably doesn't exist
+                  std::cerr << "Spotify child: stat(cpu.max) failed: "
+                            << strerror(errno) << "\n";
+                }
+              } else {
+                // Try enabling at the root cgroup level as a last resort
+                std::string root_subtree =
+                    std::string(cgroup_root) + "/cgroup.subtree_control";
+                int rsfd = open(root_subtree.c_str(), O_WRONLY | O_CLOEXEC);
+                if (rsfd >= 0) {
+                  const char *enable = "+cpu\n";
+                  if (write(rsfd, enable, strlen(enable)) < 0) {
+                    std::cerr << "Spotify child: write to " << root_subtree
+                              << " failed errno=" << errno << "\n";
+                  } else {
+                    (void)root_subtree;
+                  }
+                  close(rsfd);
+                  // Try opening cpu.max again
+                  fd = open(cpu_max_path.c_str(), O_WRONLY | O_CLOEXEC);
+                  if (fd >= 0) {
+                    const char *val = "1000 100000";
+                    ssize_t w = write(fd, val, strlen(val));
+                    if (w < 0) {
+                      std::cerr << "Spotify child: write cpu.max failed after "
+                                   "enabling root controller errno="
+                                << errno << "\n";
+                    } else {
+                      (void)val;
+                    }
+                    close(fd);
+                  } else {
+                    std::cerr
+                        << "Spotify child: open cpu.max still failed errno="
+                        << errno << "\n";
+                  }
+                } else {
+                  std::cerr << "Spotify child: open parent subtree_control "
+                               "failed errno="
+                            << errno << "\n";
+                }
+              }
+            }
+          }
+
+          // Add this process to the cgroup
+          std::string procs_path = cg_dir + "/cgroup.procs";
+          int pfd = open(procs_path.c_str(), O_WRONLY | O_CLOEXEC);
+          if (pfd >= 0) {
+            std::string pidstr = std::to_string(getpid());
+            if (write(pfd, pidstr.c_str(), pidstr.size()) < 0) {
+              std::cerr << "Spotify child: write cgroup.procs failed errno="
+                        << errno << "\n";
+            } else {
+              (void)cg_dir;
+            }
+            close(pfd);
+          } else {
+            std::cerr << "Spotify child: open cgroup.procs failed errno="
+                      << errno << "\n";
+          }
+        }
+      } else {
+        std::cerr << "Spotify child: cgroup root not present or inaccessible\n";
+      }
+      // In child: close read end of pipe (we only write)
+      if (this->ipc_pipe_read_fd >= 0) {
+        close(this->ipc_pipe_read_fd);
+        this->ipc_pipe_read_fd = -1;
+      }
+      // Run the same worker function; when it returns, exit the child
+      this->fetch_thread_worker();
+      _exit(0);
+    } else {
+      // Parent stores child pid
+      fetch_pid = pid;
+      // In parent: close write end of pipe (we only read)
+      if (this->ipc_pipe_write_fd >= 0) {
+        close(this->ipc_pipe_write_fd);
+        this->ipc_pipe_write_fd = -1;
+      }
+      // Set read fd non-blocking so animate() can poll
+      if (this->ipc_pipe_read_fd >= 0) {
+        int flags = fcntl(this->ipc_pipe_read_fd, F_GETFL, 0);
+        fcntl(this->ipc_pipe_read_fd, F_SETFL, flags | O_NONBLOCK);
+      }
+      (void)fetch_pid;
+    }
   }
 
   return !g_access_token.empty();
 }
 
 void SpotifyCurrent::fetch_thread_worker() {
-  while (!stop_thread) {
+  int loop_count = 0;
+  while (!stop_thread && !child_stop) {
+    ++loop_count;
+    (void)loop_count;
+    (void)getpid();
     TrackData new_track_data;
     if (fetch_track_info(new_track_data)) {
-      std::lock_guard<std::mutex> lock(track_data_mutex);
-      // If the track changed, replace pending data and notify the main
-      // thread. If the track didn't change, still update progress/duration
-      // so the UI progress bar stays in sync.
-      if (new_track_data.id != pending_track_data.id) {
-        pending_track_data = std::move(new_track_data);
-        new_track_available = true;
-        this->g_last_track_id = pending_track_data.id;
+      (void)new_track_data;
+
+      // If we have an IPC pipe (child), send the update to the parent instead
+      // of modifying the local memory which isn't shared across fork.
+      if (this->ipc_pipe_write_fd >= 0) {
+        // Serialize metadata as JSON
+        try {
+          json meta;
+          meta["id"] = new_track_data.id;
+          meta["name"] = new_track_data.name;
+          meta["artists"] = new_track_data.artists;
+          meta["progress_ms"] = new_track_data.progress_ms;
+          meta["duration_ms"] = new_track_data.duration_ms;
+          meta["cover_width"] = new_track_data.cover_width;
+          meta["cover_height"] = new_track_data.cover_height;
+          std::string meta_str = meta.dump();
+
+          uint32_t meta_len = htonl(static_cast<uint32_t>(meta_str.size()));
+          uint32_t img_len = htonl(
+              static_cast<uint32_t>(new_track_data.cover_rgb_data.size()));
+
+          std::vector<uint8_t> buf;
+          buf.resize(4 + meta_str.size() + 4 +
+                     new_track_data.cover_rgb_data.size());
+          uint8_t *p = buf.data();
+          memcpy(p, &meta_len, 4);
+          p += 4;
+          memcpy(p, meta_str.data(), meta_str.size());
+          p += meta_str.size();
+          memcpy(p, &img_len, 4);
+          p += 4;
+          if (!new_track_data.cover_rgb_data.empty())
+            memcpy(p, new_track_data.cover_rgb_data.data(),
+                   new_track_data.cover_rgb_data.size());
+
+          // Single atomic write (message should be < PIPE_BUF)
+          ssize_t wrote =
+              write(this->ipc_pipe_write_fd, buf.data(), buf.size());
+          if (wrote < 0) {
+            std::cerr << "fetch_thread_worker: write to ipc pipe failed: "
+                      << errno << "\n";
+          } else {
+            // Remember the last track id in the child process so we don't
+            // repeatedly re-download the same cover on subsequent polls.
+            // g_last_track_id is process-local (child has its own copy after
+            // fork), so setting it here prevents fetch_track_info() from
+            // downloading the cover again until the track actually changes.
+            this->g_last_track_id = new_track_data.id;
+          }
+        } catch (const std::exception &e) {
+          std::cerr << "fetch_thread_worker: ipc serialization error: "
+                    << e.what() << "\n";
+        }
       } else {
-        pending_track_data.progress_ms = new_track_data.progress_ms;
-        pending_track_data.duration_ms = new_track_data.duration_ms;
+        // No IPC pipe (running as thread or fallback) - update local pending
+        // data
+        std::lock_guard<std::mutex> lock(track_data_mutex);
+        if (new_track_data.id != pending_track_data.id) {
+          pending_track_data = std::move(new_track_data);
+          new_track_available = true;
+          this->g_last_track_id = pending_track_data.id;
+        } else {
+          pending_track_data.progress_ms = new_track_data.progress_ms;
+          pending_track_data.duration_ms = new_track_data.duration_ms;
+        }
       }
+    } else {
+      std::cerr << "fetch_thread_worker: fetch_track_info() => false (no "
+                   "response or error)\n";
     }
 
-    // Sleep for 2 seconds, but check stop_thread frequently
-    for (int i = 0; i < 10 && !stop_thread; ++i) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    }
+    // Sleep between polls. Use a single longer sleep to minimize wakeups and
+    // CPU. SIGTERM will interrupt nanosleep so child_stop will be observed
+    // quickly.
+    std::this_thread::sleep_for(std::chrono::seconds(5));
   }
 }
 
@@ -222,6 +496,8 @@ bool SpotifyCurrent::download_image(const std::string &url,
   if (url.empty()) {
     return false;
   }
+
+  (void)url;
 
   CURL *curl = curl_easy_init();
   if (!curl) {
@@ -238,6 +514,9 @@ bool SpotifyCurrent::download_image(const std::string &url,
   curl_easy_cleanup(curl);
 
   if (res != CURLE_OK || image_data.empty()) {
+    std::cerr << "download_image: curl failed or empty image data, res="
+              << curl_easy_strerror(res) << " size=" << image_data.size()
+              << "\n";
     return false;
   }
 
@@ -250,6 +529,7 @@ bool SpotifyCurrent::download_image(const std::string &url,
   );
 
   if (!rgb_data) {
+    std::cerr << "download_image: stbi_load_from_memory failed\n";
     return false;
   }
 
@@ -262,12 +542,112 @@ bool SpotifyCurrent::download_image(const std::string &url,
   // Free stb_image memory
   stbi_image_free(rgb_data);
 
+  (void)out_width;
+  (void)out_height;
+
   return true;
 }
 
-bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
-  if (!this->g_curl || this->g_access_token.empty())
+// Try to read a single update message from the IPC pipe (non-blocking).
+// Returns true if a message was read and applied to pending_track_data.
+bool SpotifyCurrent::read_ipc_update() {
+  if (this->ipc_pipe_read_fd < 0)
     return false;
+
+  // Use select with zero timeout to check for data
+  fd_set rfds;
+  FD_ZERO(&rfds);
+  FD_SET(this->ipc_pipe_read_fd, &rfds);
+  struct timeval tv = {0, 0};
+  int sel = select(this->ipc_pipe_read_fd + 1, &rfds, nullptr, nullptr, &tv);
+  if (sel <= 0) // no data or error
+    return false;
+
+  // Read 4-byte meta length
+  uint32_t meta_len_n = 0;
+  ssize_t r = read(this->ipc_pipe_read_fd, &meta_len_n, 4);
+  if (r <= 0)
+    return false;
+  uint32_t meta_len = ntohl(meta_len_n);
+
+  std::string meta_str;
+  meta_str.resize(meta_len);
+  ssize_t got = 0;
+  while (got < (ssize_t)meta_len) {
+    ssize_t n = read(this->ipc_pipe_read_fd, &meta_str[got], meta_len - got);
+    if (n <= 0)
+      return false;
+    got += n;
+  }
+
+  uint32_t img_len_n = 0;
+  r = read(this->ipc_pipe_read_fd, &img_len_n, 4);
+  if (r <= 0)
+    return false;
+  uint32_t img_len = ntohl(img_len_n);
+
+  std::vector<uint8_t> img;
+  img.resize(img_len);
+  got = 0;
+  while (got < (ssize_t)img_len) {
+    ssize_t n = read(this->ipc_pipe_read_fd, img.data() + got, img_len - got);
+    if (n <= 0)
+      return false;
+    got += n;
+  }
+
+  try {
+    auto meta = json::parse(meta_str);
+    TrackData td;
+    if (meta.contains("id"))
+      td.id = meta["id"].get<std::string>();
+    if (meta.contains("name"))
+      td.name = meta["name"].get<std::string>();
+    if (meta.contains("artists"))
+      td.artists = meta["artists"].get<std::string>();
+    if (meta.contains("progress_ms"))
+      td.progress_ms = meta["progress_ms"].get<long>();
+    if (meta.contains("duration_ms"))
+      td.duration_ms = meta["duration_ms"].get<long>();
+    if (meta.contains("cover_width"))
+      td.cover_width = meta["cover_width"].get<int>();
+    if (meta.contains("cover_height"))
+      td.cover_height = meta["cover_height"].get<int>();
+    td.cover_rgb_data = std::move(img);
+
+    {
+      std::lock_guard<std::mutex> lock(track_data_mutex);
+      // If this update contains image data (or non-zero cover size) or the
+      // track id differs from our last seen id, treat it as a full update
+      // and replace pending data so animate() can react (crossfade, cover
+      // changes, etc.).
+      if (!td.cover_rgb_data.empty() || td.cover_width > 0 ||
+          td.cover_height > 0 || td.id != this->g_last_track_id) {
+        pending_track_data = std::move(td);
+        new_track_available = true;
+        this->g_last_track_id = pending_track_data.id;
+      } else {
+        // This is a progress-only update for the same track. Update only
+        // the progress/duration so we don't overwrite cover data or
+        // trigger crossfade behavior.
+        pending_track_data.progress_ms = td.progress_ms;
+        pending_track_data.duration_ms = td.duration_ms;
+        // Do not set new_track_available; animate() will read the updated
+        // pending_track_data when drawing the progress bar.
+        (void)td;
+      }
+    }
+    return true;
+  } catch (...) {
+    std::cerr << "read_ipc_update: parse error\n";
+    return false;
+  }
+}
+
+bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
+  if (!this->g_curl || this->g_access_token.empty()) {
+    return false;
+  }
 
   static const std::string playing_url =
       "https://api.spotify.com/v1/me/player/currently-playing";
@@ -282,14 +662,20 @@ bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
   std::string response;
   curl_easy_setopt(this->g_curl, CURLOPT_WRITEDATA, &response);
   CURLcode res = curl_easy_perform(this->g_curl);
+  long http_code = 0;
+  curl_easy_getinfo(this->g_curl, CURLINFO_RESPONSE_CODE, &http_code);
   curl_slist_free_all(headers);
 
   if (res != CURLE_OK) {
+    std::cerr << "fetch_track_info: curl perform failed: "
+              << curl_easy_strerror(res) << "\n";
     return false;
   }
 
-  if (response.empty())
+  if (response.empty()) {
+    std::cerr << "fetch_track_info: empty response\n";
     return false;
+  }
 
   try {
     auto j = json::parse(response);
@@ -353,27 +739,36 @@ bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
     }
 
     if (!cover_url.empty()) {
-      download_image(cover_url, out_data.cover_rgb_data, out_data.cover_width,
-                     out_data.cover_height);
+      bool img_ok = download_image(cover_url, out_data.cover_rgb_data,
+                                   out_data.cover_width, out_data.cover_height);
+      if (!img_ok) {
+        std::cerr << "fetch_track_info: download_image failed for url="
+                  << cover_url << "\n";
+      }
     }
 
     return true;
 
+  } catch (const std::exception &e) {
+    std::cerr << "fetch_track_info: json parse/processing exception: "
+              << e.what() << "\n";
+    return false;
   } catch (...) {
+    std::cerr << "fetch_track_info: unknown exception while parsing\n";
     return false;
   }
 }
 
 void SpotifyCurrent::display_covers(float fade_progress) {
   if (prev_track_data.cover_rgb_data.empty() ||
-      pending_track_data.cover_rgb_data.empty())
+      pending_track_data.cover_rgb_data.empty()) {
     return;
+  }
 
   int x_offset = 12;
   int y_offset = 32;
-  // fade_progress =
-  //     (fade_progress * fade_progress * (3 - 2 * fade_progress)); //
-  //     Smoothstep
+  fade_progress =
+      (fade_progress * fade_progress * (3 - 2 * fade_progress)); // Smoothstep
   float inv_progress = 1.0f - fade_progress;
   // 1 - Normal crossfade
   if (true) {
@@ -584,6 +979,13 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
 }
 
 void SpotifyCurrent::animate(double time) {
+  // Try to drain any IPC updates from the child process before rendering
+  if (this->ipc_pipe_read_fd >= 0) {
+    // Read as many updates as available
+    while (read_ipc_update()) {
+      // continue draining
+    }
+  }
   if (last_animate_call <= 0) {
     last_animate_call = time;
   }
@@ -591,7 +993,6 @@ void SpotifyCurrent::animate(double time) {
   if (!initialized) {
     if (init_spotify()) {
       initialized = true;
-      std::cout << "SpotifyCurrent initialized successfully.\n";
     } else {
       std::cerr << "SpotifyCurrent initialization failed.\n";
     }
@@ -599,8 +1000,8 @@ void SpotifyCurrent::animate(double time) {
 
   // Handle crossfade animation
   if (is_fading && fade_progress < 1.0) {
-    display_covers(fade_progress);
-    matrix->SwapOnVSync(offscreen_canvas);
+    // display_covers(fade_progress);
+    // matrix->SwapOnVSync(offscreen_canvas);
     fade_progress +=
         (time - last_animate_time) /
         static_cast<double>(params_.cover_fade_duration
@@ -609,8 +1010,8 @@ void SpotifyCurrent::animate(double time) {
   } else {
     if (is_fading) {
       fade_progress = 1.0;
-      display_covers(fade_progress);
-      matrix->SwapOnVSync(offscreen_canvas);
+      // display_covers(fade_progress);
+      // matrix->SwapOnVSync(offscreen_canvas);
       is_fading = false;
       prev_track_data = pending_track_data;
     }
@@ -636,8 +1037,6 @@ void SpotifyCurrent::animate(double time) {
         matrix->width() - text_x - 5; // Leave 5px margin on the right
 
     if (prev_track_data.id != new_track.id && !is_fading) {
-      /*std::cout << "Now playing: " << new_track.name << " by "
-                << new_track.artists << "\n";*/
 
       // If we don't have a previous cover (first track), display the cover
       // immediately instead of trying to crossfade from an empty image.
@@ -648,13 +1047,13 @@ void SpotifyCurrent::animate(double time) {
         is_fading = false;
 
         // Draw the cover immediately
-        offscreen_canvas->Clear();
-        display_covers(1.0f);
+        // offscreen_canvas->Clear();
+        // display_covers(1.0f);
 
         // Render track text
-        render_track_text(pending_track_data);
+        // render_track_text(pending_track_data);
 
-        matrix->SwapOnVSync(offscreen_canvas);
+        // matrix->SwapOnVSync(offscreen_canvas);
       } else {
         // Start crossfade
         pending_track_data = new_track;
@@ -662,7 +1061,7 @@ void SpotifyCurrent::animate(double time) {
         is_fading = true;
 
         // Render track text
-        render_track_text(pending_track_data);
+        // render_track_text(pending_track_data);
       }
     }
   }
@@ -685,6 +1084,8 @@ void SpotifyCurrent::animate(double time) {
     int filled_width = static_cast<int>(bar_width * displayed_progress_ratio);
     float remaining_width_f = filled_width_f - filled_width;
 
+    offscreen_canvas->Clear();
+
     // Draw the progress bar
     for (int x = 0; x < bar_width; ++x) {
       if (x < filled_width) {
@@ -705,14 +1106,17 @@ void SpotifyCurrent::animate(double time) {
       }
     }
 
-    matrix->SwapOnVSync(offscreen_canvas);
+    display_covers(is_fading ? fade_progress : 1.0f);
+    render_track_text(pending_track_data);
+    // offscreen_canvas->Fill(255, 0, 0);
+    offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
 
     pending_track_data.progress_ms +=
         static_cast<long>((time - last_animate_call) * 1000);
   }
 
   last_animate_call = time;
-  // std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 } // namespace animations

@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
   defaults.cols = 128;
   defaults.chain_length = 2;
   defaults.parallel = 2;
+  runtime_options.drop_privileges = -1; // Don't drop privileges
   // defaults.show_refresh_rate = true;
   runtime_options.gpio_slowdown = 4;
   RGBMatrix *matrix =
