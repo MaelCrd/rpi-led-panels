@@ -2,6 +2,7 @@
 #include "../deps/stb_image.h"
 #include <algorithm>
 #include <cerrno>
+#include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <fstream>
@@ -195,16 +196,22 @@ void SpotifyCurrent::fetch_thread_worker() {
     TrackData new_track_data;
     if (fetch_track_info(new_track_data)) {
       std::lock_guard<std::mutex> lock(track_data_mutex);
-      // Only update if track ID changed
+      // If the track changed, replace pending data and notify the main
+      // thread. If the track didn't change, still update progress/duration
+      // so the UI progress bar stays in sync.
       if (new_track_data.id != pending_track_data.id) {
         pending_track_data = std::move(new_track_data);
         new_track_available = true;
+        this->g_last_track_id = pending_track_data.id;
+      } else {
+        pending_track_data.progress_ms = new_track_data.progress_ms;
+        pending_track_data.duration_ms = new_track_data.duration_ms;
       }
     }
 
     // Sleep for 2 seconds, but check stop_thread frequently
-    for (int i = 0; i < 20 && !stop_thread; ++i) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    for (int i = 0; i < 10 && !stop_thread; ++i) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
   }
 }
@@ -294,13 +301,20 @@ bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
     if (item.contains("id") && item["id"].is_string()) {
       current_id = item["id"].get<std::string>();
     }
+    out_data.id = current_id;
+
+    if (j.contains("progress_ms") && j["progress_ms"].is_number_integer()) {
+      out_data.progress_ms = j["progress_ms"].get<long>();
+    }
+    if (item.contains("duration_ms") &&
+        item["duration_ms"].is_number_integer()) {
+      out_data.duration_ms = item["duration_ms"].get<long>();
+    }
 
     // Check if track changed
     if (current_id == this->g_last_track_id && !current_id.empty()) {
-      return false; // No change
+      return true; // No need to update other fields
     }
-
-    out_data.id = current_id;
 
     if (item.contains("name") && item["name"].is_string()) {
       out_data.name = item["name"].get<std::string>();
@@ -356,22 +370,58 @@ void SpotifyCurrent::display_covers(float fade_progress) {
     return;
 
   int x_offset = 12;
-  int y_offset = 12;
-  // float inv_progress = 1.0f - fade_progress;
-  // Slow start and end to the fade
-  float inv_progress = 1.0f - (fade_progress * fade_progress *
-                               (3 - 2 * fade_progress)); // Smoothstep
+  int y_offset = 32;
+  // fade_progress =
+  //     (fade_progress * fade_progress * (3 - 2 * fade_progress)); //
+  //     Smoothstep
+  float inv_progress = 1.0f - fade_progress;
+  // 1 - Normal crossfade
+  if (true) {
+    // float inv_progress = 1.0f - fade_progress;
+    // Slow start and end to the fade
+    for (int y = 0; y < prev_track_data.cover_height; ++y) {
+      for (int x = 0; x < prev_track_data.cover_width; ++x) {
+        int index = (y * prev_track_data.cover_width + x) * 3;
+        uint8_t r = prev_track_data.cover_rgb_data[index] * inv_progress +
+                    pending_track_data.cover_rgb_data[index] * fade_progress;
+        uint8_t g =
+            prev_track_data.cover_rgb_data[index + 1] * inv_progress +
+            pending_track_data.cover_rgb_data[index + 1] * fade_progress;
+        uint8_t b =
+            prev_track_data.cover_rgb_data[index + 2] * inv_progress +
+            pending_track_data.cover_rgb_data[index + 2] * fade_progress;
+        offscreen_canvas->SetPixel(x + x_offset, y + y_offset, r, g, b);
+      }
+    }
+  }
 
-  for (int y = 0; y < prev_track_data.cover_height; ++y) {
-    for (int x = 0; x < prev_track_data.cover_width; ++x) {
-      int index = (y * prev_track_data.cover_width + x) * 3;
-      uint8_t r = prev_track_data.cover_rgb_data[index] * inv_progress +
-                  pending_track_data.cover_rgb_data[index] * fade_progress;
-      uint8_t g = prev_track_data.cover_rgb_data[index + 1] * inv_progress +
-                  pending_track_data.cover_rgb_data[index + 1] * fade_progress;
-      uint8_t b = prev_track_data.cover_rgb_data[index + 2] * inv_progress +
-                  pending_track_data.cover_rgb_data[index + 2] * fade_progress;
-      offscreen_canvas->SetPixel(x + x_offset, y + y_offset, r, g, b);
+  // 2 - Crossfade with color overflow :
+  // for a single pixel, starts from color1, then goes to color2final
+  // (color2final = color1 + (255 - color1) + color2)
+  else {
+    // float fade_progress_r = pow(sin(fade_progress * M_PI * 3 / 2), 2);
+    // float fade_progress_g = pow(sin(fade_progress * M_PI * 5 / 2), 2);
+    // float fade_progress_b = pow(sin(fade_progress * M_PI * 7 / 2), 2);
+    float fade_progress_r = fade_progress;
+    float fade_progress_g = fade_progress;
+    float fade_progress_b = fade_progress;
+    for (int y = 0; y < prev_track_data.cover_height; ++y) {
+      for (int x = 0; x < prev_track_data.cover_width; ++x) {
+        int index = (y * prev_track_data.cover_width + x) * 3;
+        uint8_t r = prev_track_data.cover_rgb_data[index] +
+                    (256 - prev_track_data.cover_rgb_data[index] +
+                     pending_track_data.cover_rgb_data[index]) *
+                        fade_progress_r;
+        uint8_t g = prev_track_data.cover_rgb_data[index + 1] +
+                    (256 - prev_track_data.cover_rgb_data[index + 1] +
+                     pending_track_data.cover_rgb_data[index + 1]) *
+                        fade_progress_g;
+        uint8_t b = prev_track_data.cover_rgb_data[index + 2] +
+                    (256 - prev_track_data.cover_rgb_data[index + 2] +
+                     pending_track_data.cover_rgb_data[index + 2]) *
+                        fade_progress_b;
+        offscreen_canvas->SetPixel(x + x_offset, y + y_offset, r, g, b);
+      }
     }
   }
 }
@@ -477,7 +527,7 @@ std::vector<std::string> SpotifyCurrent::wrap_text(const std::string &text,
 void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   // Calculate positions
   const int cover_x = 12;
-  const int cover_y = 12;
+  const int cover_y = 32;
   const int cover_size = 64;
   const int cover_center_y = cover_y + cover_size / 2;
   const int text_x = cover_x + cover_size + 10;
@@ -495,7 +545,7 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   // Calculate total height of text block (with 6px spacing between title and
   // artists)
   int spacing = 6;
-  int line_spacing = 2; // Reduced spacing between lines within title/artists
+  int line_spacing = 0; // Reduced spacing between lines within title/artists
   int title_height =
       title_lines.size() * title_font.height() -
       (title_lines.size() > 1 ? (title_lines.size() - 1) * line_spacing : 0);
@@ -511,8 +561,12 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   // Draw track name
   int title_y = text_start_y + title_font.baseline();
   for (const auto &line : title_lines) {
+    // Convert parameter color to rgb_matrix::Color
+    rgb_matrix::Color draw_title_color(params_.title_color.value.r,
+                                       params_.title_color.value.g,
+                                       params_.title_color.value.b);
     rgb_matrix::DrawText(offscreen_canvas, title_font, text_x, title_y,
-                         title_color, nullptr, line.c_str());
+                         draw_title_color, nullptr, line.c_str());
     title_y += title_font.height() - line_spacing;
   }
 
@@ -520,13 +574,20 @@ void SpotifyCurrent::render_track_text(const TrackData &track_data) {
   int artists_y =
       text_start_y + title_height + spacing + artists_font.baseline();
   for (const auto &line : artists_lines) {
+    rgb_matrix::Color draw_artists_color(params_.artists_color.value.r,
+                                         params_.artists_color.value.g,
+                                         params_.artists_color.value.b);
     rgb_matrix::DrawText(offscreen_canvas, artists_font, text_x, artists_y,
-                         artists_color, nullptr, line.c_str());
+                         draw_artists_color, nullptr, line.c_str());
     artists_y += artists_font.height() - line_spacing;
   }
 }
 
 void SpotifyCurrent::animate(double time) {
+  if (last_animate_call <= 0) {
+    last_animate_call = time;
+  }
+
   if (!initialized) {
     if (init_spotify()) {
       initialized = true;
@@ -542,7 +603,8 @@ void SpotifyCurrent::animate(double time) {
     matrix->SwapOnVSync(offscreen_canvas);
     fade_progress +=
         (time - last_animate_time) /
-        COVER_FADE_DURATION; // Adjust fade speed here (0.5 = 2 second fade)
+        static_cast<double>(params_.cover_fade_duration
+                                .value); // Adjust fade speed via parameter
     last_animate_time = time;
   } else {
     if (is_fading) {
@@ -605,6 +667,51 @@ void SpotifyCurrent::animate(double time) {
     }
   }
 
+  // Show progress bar and update it
+  int bar_y = matrix->height() - 1 - 1; // 1px from bottom
+  int bar_height = 1;
+  int bar_width = matrix->width();
+  if (pending_track_data.duration_ms > 0) {
+    float progress_ratio = static_cast<float>(pending_track_data.progress_ms) /
+                           static_cast<float>(pending_track_data.duration_ms);
+    progress_ratio = std::clamp(progress_ratio, 0.0f, 1.0f);
+    float progress_diff = progress_ratio - displayed_progress_ratio;
+    displayed_progress_ratio +=
+        progress_diff * 4.0f *
+        (time - last_animate_call); // Smoothly interpolate displayed progress
+
+    displayed_progress_ratio = std::clamp(displayed_progress_ratio, 0.0f, 1.0f);
+    float filled_width_f = bar_width * displayed_progress_ratio;
+    int filled_width = static_cast<int>(bar_width * displayed_progress_ratio);
+    float remaining_width_f = filled_width_f - filled_width;
+
+    // Draw the progress bar
+    for (int x = 0; x < bar_width; ++x) {
+      if (x < filled_width) {
+        offscreen_canvas->SetPixel(x, bar_y, params_.progress_bar_color.value.r,
+                                   params_.progress_bar_color.value.g,
+                                   params_.progress_bar_color.value.b);
+      } else if (x == filled_width) {
+        // Partial pixel for smoother progress
+        uint8_t r = static_cast<uint8_t>(params_.progress_bar_color.value.r *
+                                         remaining_width_f);
+        uint8_t g = static_cast<uint8_t>(params_.progress_bar_color.value.g *
+                                         remaining_width_f);
+        uint8_t b = static_cast<uint8_t>(params_.progress_bar_color.value.b *
+                                         remaining_width_f);
+        offscreen_canvas->SetPixel(x, bar_y, r, g, b);
+      } else {
+        offscreen_canvas->SetPixel(x, bar_y, 0, 0, 0); // Clear unfilled part
+      }
+    }
+
+    matrix->SwapOnVSync(offscreen_canvas);
+
+    pending_track_data.progress_ms +=
+        static_cast<long>((time - last_animate_call) * 1000);
+  }
+
+  last_animate_call = time;
   // std::this_thread::sleep_for(std::chrono::milliseconds(200));
 }
 

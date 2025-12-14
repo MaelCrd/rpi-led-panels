@@ -19,19 +19,25 @@
 namespace animations {
 
 struct SpotifyCurrentParams : ParameterSet<SpotifyCurrentParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
+  // Parameters for SpotifyCurrent
+  PARAM_FLOAT(cover_fade_duration, 1.3f, 0.0f, 10.0f, "Cover fade duration")
+  PARAM_COLOR(title_color, Color(255, 255, 255), "Title color")
+  PARAM_COLOR(artists_color, Color(150, 150, 150), "Artists color")
+  PARAM_COLOR(progress_bar_color, Color(50, 50, 50), "Progress bar color")
+
   // Provide tuple of references for iteration
-  auto &tuple() { return empty_tuple; }
-  auto const &tuple() const { return empty_tuple; }
+  auto tuple() {
+    return std::tie(cover_fade_duration, title_color, artists_color,
+                    progress_bar_color);
+  }
+  auto tuple() const {
+    return std::tie(cover_fade_duration, title_color, artists_color,
+                    progress_bar_color);
+  }
 };
 
 class SpotifyCurrent : public Animation<SpotifyCurrent, SpotifyCurrentParams> {
 private:
-  // Fade configuration
-  static constexpr double COVER_FADE_DURATION =
-      0.7; // Duration in seconds for cover fade-in
-
   const char *client_id = "REMOVED_SECRET";
   const char *client_secret = "REMOVED_SECRET";
   const std::string g_refresh_token_str =
@@ -46,6 +52,8 @@ private:
     std::vector<uint8_t> cover_rgb_data;
     int cover_width = 0;
     int cover_height = 0;
+    long progress_ms = 0;
+    long duration_ms = 0;
   };
 
   TrackData prev_track_data{};
@@ -62,6 +70,10 @@ private:
   bool is_fading = false;
 
   double last_animate_time = -1.0;
+
+  double last_animate_call = 0.0;
+
+  float displayed_progress_ratio = 0.0f;
 
   // Thread management
   std::thread fetch_thread;
@@ -102,19 +114,24 @@ public:
   // Override mode parameter methods - Static has no parameters so all modes are
   // the same
   void applyDefaultParameters() override {
-    // No parameters to set
+    params_.cover_fade_duration.value = 1.3f;
+    params_.title_color.value = Color(255, 255, 255);
+    params_.artists_color.value = Color(150, 150, 150);
+    params_.progress_bar_color.value = Color(50, 50, 50);
   }
 
   void applyPresetParameters() override {
-    // No parameters to set
+    params_.cover_fade_duration.value = 1.3f;
+    params_.title_color.value = Color(255, 255, 255);
+    params_.artists_color.value = Color(150, 150, 150);
+    params_.progress_bar_color.value = Color(65, 65, 65);
   }
 
+protected:
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
   rgb_matrix::Font title_font;
   rgb_matrix::Font artists_font;
-  rgb_matrix::Color title_color = rgb_matrix::Color(255, 255, 255);
-  rgb_matrix::Color artists_color = rgb_matrix::Color(150, 150, 150);
 };
 } // namespace animations
 
