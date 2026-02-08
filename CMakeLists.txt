@@ -32,6 +32,17 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE) #example if don't need the graph tool
 add_subdirectory(deps/FastNoise2)
 
+# Fix for FastNoise2 adding x86 flag on ARM architecture and fix strict vector types
+get_target_property(FS_OPTS FastSIMD_FastNoise COMPILE_OPTIONS)
+if(NOT FS_OPTS)
+    set(FS_OPTS "")
+endif()
+list(REMOVE_ITEM FS_OPTS "-mno-vzeroupper")
+list(REMOVE_ITEM FS_OPTS "-Wno-nan-infinity-disabled")
+list(APPEND FS_OPTS "-flax-vector-conversions")
+set_target_properties(FastSIMD_FastNoise PROPERTIES COMPILE_OPTIONS "${FS_OPTS}")
+
+
 # Disable Unity Build for FastNoise as it causes build errors
 # set_target_properties(FastNoise PROPERTIES UNITY_BUILD OFF)
 
@@ -44,8 +55,10 @@ find_package(CURL REQUIRED) # libcurl4-openssl-dev
 set(RGBMATRIX_LIB "${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib/librgbmatrix.a")
 add_custom_command(
     OUTPUT ${RGBMATRIX_LIB}
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib clean
+    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib "CFLAGS=-O3 -g -fPIC -W -Wall -Wextra -Wno-unused-parameter" "CXXFLAGS=-O3 -g -fPIC -fno-exceptions -std=c++17 -W -Wall -Wextra -Wno-unused-parameter"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib
+    DEPENDS ${CMAKE_CURRENT_LIST_FILE}
     COMMENT "Building RGB matrix library"
 )
 add_custom_target(rgbmatrix_lib DEPENDS ${RGBMATRIX_LIB})
