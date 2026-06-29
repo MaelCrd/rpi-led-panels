@@ -10,11 +10,13 @@
 namespace animations {
 
 struct GameOfLifeParams : ParameterSet<GameOfLifeParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
+  // Add color parameter
+  PARAM_COLOR(color, Color(255, 255, 255), "Color")
+  PARAM_FLOAT(speed, 1.0, 0.05, 2.0, "Speed")
+
   // Provide tuple of references for iteration
-  auto &tuple() { return empty_tuple; }
-  auto const &tuple() const { return empty_tuple; }
+  auto tuple() { return std::tie(color, speed); }
+  auto tuple() const { return std::tie(color, speed); }
 };
 
 class GameOfLife : public Animation<GameOfLife, struct GameOfLifeParams> {
@@ -29,11 +31,13 @@ public:
   // Override mode parameter methods - GameOfLife has no parameters so all modes
   // are the same
   void applyDefaultParameters() override {
-    // No parameters to set
+    params_.color.value = Color(255, 255, 255);
+    params_.speed.value = 1.0;
   }
 
   void applyPresetParameters() override {
-    // No parameters to set
+    params_.color.value = Color(255, 0, 0);
+    params_.speed.value = 1.0;
   }
 
 protected:
@@ -44,7 +48,7 @@ private:
   uint16_t birthRulesBits = 0;
   uint16_t survivalRulesBits = 0;
   double lastTime = 0;
-  int fps = 35;
+  int fps = 24;
 
   void parseRules(const std::string &rules);
 };

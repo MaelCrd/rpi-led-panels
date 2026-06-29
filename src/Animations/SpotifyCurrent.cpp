@@ -255,7 +255,7 @@ bool SpotifyCurrent::init_spotify() {
           std::string cpu_max_path = cg_dir + "/cpu.max";
           int fd = open(cpu_max_path.c_str(), O_WRONLY | O_CLOEXEC);
           if (fd >= 0) {
-            const char *val = "5000 100000"; // ~1% (1000/100000)
+            const char *val = "8000 100000"; // ~8% (8000/100000)
             ssize_t w = write(fd, val, strlen(val));
             if (w < 0) {
               std::cerr << "Spotify child: write cpu.max failed errno=" << errno
@@ -486,7 +486,7 @@ void SpotifyCurrent::fetch_thread_worker() {
     // Sleep between polls. Use a single longer sleep to minimize wakeups and
     // CPU. SIGTERM will interrupt nanosleep so child_stop will be observed
     // quickly.
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
   }
 }
 

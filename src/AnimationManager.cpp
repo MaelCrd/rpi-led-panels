@@ -9,11 +9,13 @@
 #include "Animations/HeightMap.h"
 #include "Animations/Image.h"
 #include "Animations/Lightning.h"
+#include "Animations/MagneticField.h"
 #include "Animations/Matrix.h"
 #include "Animations/Maze.h"
 #include "Animations/Party.h"
 #include "Animations/Random.h"
 #include "Animations/Spheres.h"
+#include "Animations/Splash.h"
 #include "Animations/SpotifyCurrent.h"
 #include "Animations/Stars.h"
 #include "Animations/Static.h"
@@ -22,6 +24,7 @@
 #include <cstdio> // For snprintf
 
 #include "QRCode.h"
+#include "graphics.h"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
@@ -69,6 +72,8 @@ void AnimationManager::initAnimations() {
   animations.push_back(new Lightning(matrix));
   animations.push_back(new ChristmasTree(matrix));
   animations.push_back(new SpotifyCurrent(matrix));
+  animations.push_back(new Splash(matrix));
+  animations.push_back(new MagneticField(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};

@@ -1,5 +1,4 @@
 #include <Animations/GameOfLife.h>
-#include <cstdint>
 #include <ctime>
 #include <sstream>
 
@@ -56,7 +55,7 @@ void GameOfLife::animate(double time) {
     return;
   }
 
-  if (time - lastTime < 1.0 / fps) {
+  if (time - lastTime < 1.0 / fps / params_.speed.value) {
     return; // Skip frame to maintain target FPS
   }
   lastTime = time;
@@ -88,11 +87,12 @@ void GameOfLife::animate(double time) {
   std::swap(grid, nextGrid);
 
   // auto canvas = matrix->CreateFrameCanvas();
+  Color color = params_.color.value;
 
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
-      uint8_t color = grid[y][x] ? 255 : 0;
-      matrix->SetPixel(x, y, color, color, color);
+      matrix->SetPixel(x, y, grid[y][x] ? color.r : 0, grid[y][x] ? color.g : 0,
+                       grid[y][x] ? color.b : 0);
     }
   }
 
