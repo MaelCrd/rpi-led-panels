@@ -10,58 +10,77 @@
 
 namespace animations {
 
-void MagneticField::animate(double time) {
-  auto c = rgb_matrix::Color(255, 0, 255);
-  uint8_t r, g, b;
+void MagneticField::spawnMagneticElement(bool initial_spawn = false) {
+  MagneticElement element;
 
+  // Try to spawn the element at a random position, but ensure it is not too
+  // close to existing elements
+  bool valid_position = false;
+  uint16_t max_attempts = 200;
+  while (!valid_position && max_attempts > 0) {
+    valid_position = true;
+    element.x = rand() % offscreen_canvas->width();
+    element.y = rand() % offscreen_canvas->height();
+
+    for (const auto &existing_element : magnetic_elements) {
+      float dx = existing_element.x - element.x;
+      float dy = existing_element.y - element.y;
+      float distance_squared = dx * dx + dy * dy;
+      if (distance_squared < 5200.0f) { // Minimum distance squared
+        valid_position = false;
+        break;
+      }
+    }
+    max_attempts--;
+  }
+
+  element.life = ((rand() % (4 * 100)) / 100.0f + 3);
+  element.age = initial_spawn
+                    ? (rand() % static_cast<int>(element.life * 1000)) / 1000.0f
+                    : 0.0f;
+
+  // Random hue between 0-12 and 285-360 degrees
+  float hue = (285 + rand() % (75 + 12)) % 360;
+  uint8_t r, g, b;
+  utils::hsvToRgb(hue, 0.73f, 1.0f, r, g, b);
+  element.color[0] = r;
+  element.color[1] = g;
+  element.color[2] = b;
+
+  magnetic_elements.push_back(element);
+}
+
+void MagneticField::setup() {
+  last_time = 0;
+  magnetic_elements.clear();
+  // Spawn a few initial magnetic elements
+  for (int i = 0; i < 5; ++i) {
+    spawnMagneticElement(true);
+  }
+}
+
+void MagneticField::animate(double time) {
+  float delta_time = (time - last_time) * params_.speed.value;
+  if (!initialized) {
+    setup();
+    initialized = true;
+  }
   offscreen_canvas->Clear();
 
   // Create a new magnetic element with a certain probability
-  if ((rand() % 60 < 1 && magnetic_elements.size() < 5) ||
-      magnetic_elements.size() <=
-          2) { // % chance of spawning a new magnetic element
-    MagneticElement element;
-
-    // Try to spawn the element at a random position, but ensure it is not too
-    // close to existing elements
-    bool valid_position = false;
-    uint16_t max_attempts = 200;
-    while (!valid_position && max_attempts > 0) {
-      valid_position = true;
-      element.x = rand() % offscreen_canvas->width();
-      element.y = rand() % offscreen_canvas->height();
-
-      for (const auto &existing_element : magnetic_elements) {
-        float dx = existing_element.x - element.x;
-        float dy = existing_element.y - element.y;
-        float distance_squared = dx * dx + dy * dy;
-        if (distance_squared < 5500.0f) { // Minimum distance squared
-          valid_position = false;
-          break;
-        }
-      }
-      max_attempts--;
-    }
-    // std::cout << "Max attempts left: " << max_attempts << std::endl;
-
-    element.life = (rand() % 10 + 20) / 3.0;
-    element.age = 0;
-
-    // Random hue between 0-20 and 265-360 degrees
-    float hue =
-        (265 + rand() % (95 + 20)) % 360; // Random hue between 200-360 degrees
-    utils::hsvToRgb(hue, 0.8f, 1.0f, r, g, b);
-    element.color[0] = r;
-    element.color[1] = g;
-    element.color[2] = b;
-
-    magnetic_elements.push_back(element);
+  if (magnetic_elements.size() < 3 ||
+      (rand() % 100 < 100.0f * delta_time &&
+       magnetic_elements.size() <
+           5)) { // % chance of spawning a new magnetic element
+    spawnMagneticElement();
   }
+
+  // std::cout << "Magnetic elements count: " << magnetic_elements.size()
+  //           << std::endl;
 
   // Update magnetic elements
   for (auto it = magnetic_elements.begin(); it != magnetic_elements.end();) {
     MagneticElement &element = *it;
-    float delta_time = time - last_time;
     element.age += delta_time;
     element.strength =
         (1 + sin((element.age / element.life - 0.25f) * M_PI * 2.0f)) / 2.0f;
@@ -69,6 +88,10 @@ void MagneticField::animate(double time) {
       it = magnetic_elements.erase(it);
     } else {
       ++it;
+      // offscreen_canvas->SetPixel(static_cast<int>(element.x),
+      //                            static_cast<int>(element.y),
+      //                            element.color[0], element.color[1],
+      //                            element.color[2]);
     }
   }
 
@@ -98,55 +121,43 @@ void MagneticField::animate(double time) {
       int angle_index =
           static_cast<int>(round((angle + M_PI) / (M_PI * 2.0) * 8.0));
 
-      rgb_matrix::Color color(255, 255, 255);
-      rgb_matrix::Color color_dark(255, 0, 0);
-      rgb_matrix::Color color_light(190, 0, 0);
       int dx = 0, dy = 0;
       switch (angle_index) {
       case 0: // Right (pt. 1)
         dx = 1;
         dy = 0;
-        color = color_dark;
         break;
       case 1: // Down-Right
         dx = 1;
         dy = 1;
-        color = color_light;
         break;
       case 2: // Down
         dx = 0;
         dy = 1;
-        color = color_dark;
         break;
       case 3: // Down-Left
         dx = 1;
         dy = -1;
-        color = color_light;
         break;
       case 4: // Left
         dx = -1;
         dy = 0;
-        color = color_dark;
         break;
       case 5: // Up-Left
         dx = -1;
         dy = -1;
-        color = color_light;
         break;
       case 6: // Up
         dx = 0;
         dy = -1;
-        color = color_dark;
         break;
       case 7: // Up-Right
         dx = 1;
         dy = -1;
-        color = color_light;
         break;
       case 8: // Right (pt. 2)
         dx = 1;
         dy = 0;
-        color = color_dark;
         break;
       default:
         dx = 0;
@@ -158,9 +169,15 @@ void MagneticField::animate(double time) {
       mixed_r = (mixed_r / max_mixed_value) * 255.0f;
       mixed_g = (mixed_g / max_mixed_value) * 255.0f;
       mixed_b = (mixed_b / max_mixed_value) * 255.0f;
-      color = rgb_matrix::Color(static_cast<uint8_t>(mixed_r),
-                                static_cast<uint8_t>(mixed_g),
-                                static_cast<uint8_t>(mixed_b));
+      auto color = rgb_matrix::Color(static_cast<uint8_t>(mixed_r),
+                                     static_cast<uint8_t>(mixed_g),
+                                     static_cast<uint8_t>(mixed_b));
+      // If not black, use the user-defined color instead
+      if (!(params_.color.value.r == 0 && params_.color.value.g == 0 &&
+            params_.color.value.b == 0)) {
+        color = rgb_matrix::Color(params_.color.value.r, params_.color.value.g,
+                                  params_.color.value.b);
+      }
 
       int x1 = x - dx;
       int y1 = y - dy;

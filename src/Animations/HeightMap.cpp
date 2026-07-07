@@ -246,7 +246,10 @@ HeightMap::HeightMap(rgb_matrix::RGBMatrix *matrix)
 void HeightMap::animate(double time) {
   int width = matrix->width();
   int height = matrix->height();
-  float timeZ = static_cast<float>(time + 99) / 5.0f;
+
+  // float timeZ = static_cast<float>(time + 99) / 5.0f;
+  auto delta_time = time - last_time;
+  timeZ += static_cast<float>(delta_time / 5.0f) * params_.speed.value;
 
   // Combined loop for better cache performance
   for (int i = 0; i < width * height; i++) {
@@ -263,11 +266,48 @@ void HeightMap::animate(double time) {
     int x = i % width;
     int y = i / width;
     if (x < width && y < height) {
-      matrix->SetPixel(x, y, colorLookup[clampedValue][0],
-                       colorLookup[clampedValue][1],
-                       colorLookup[clampedValue][2]);
+      double fact = 0;
+      switch (params_.style.value) {
+      case 1:
+        // Style 1: Use the pre-computed color lookup table
+        matrix->SetPixel(x, y, colorLookup[clampedValue][0],
+                         colorLookup[clampedValue][1],
+                         colorLookup[clampedValue][2]);
+        break;
+      case 2:
+        fact = pow(value / 125.0, 5);
+        matrix->SetPixel(x, y, fact * params_.color.value.r,
+                         fact * params_.color.value.g,
+                         fact * params_.color.value.b);
+        break;
+      case 3:
+        fact = (1 + sin(noiseValue * 100.0)) / 2.0;
+        matrix->SetPixel(x, y, fact * params_.color.value.r,
+                         fact * params_.color.value.g,
+                         fact * params_.color.value.b);
+        break;
+      case 4:
+        fact = tan(((noiseValue + 1) * 0.97 * 10.0)) * 16.0;
+        matrix->SetPixel(x, y, fact * params_.color.value.r / 255.0,
+                         fact * params_.color.value.g / 255.0,
+                         fact * params_.color.value.b / 255.0);
+        break;
+      case 5:
+        fact = ((int)(((noiseValue + 1) * 0.5) * 8.0));
+        matrix->SetPixel(x, y, fact * (params_.color.value.r / 8.0),
+                         fact * (params_.color.value.g / 8.0),
+                         fact * (params_.color.value.b / 8.0));
+        break;
+      }
+
+      // matrix->SetPixel(x, y, pow(noiseValue * 255.0, 2), 0, 0);
+      // matrix->SetPixel(x, y, (noiseValue + 1) * 255.0 * 10.0, 0, 0);
+
+      // matrix->SetPixel(x, y, tan(((noiseValue + 1) * 0.97 * 10.0)) * 16.0, 0,
+      //                  tan(((noiseValue + 1) * 0.97 * 10.0)) * 6.0);
     }
   }
+  last_time = time;
 }
 
 } // namespace animations
