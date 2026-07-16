@@ -172,9 +172,23 @@ public:
   }
 };
 
-Spheres::Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
-  // Create offscreen canvas for rendering
-  offscreen_canvas = matrix->CreateFrameCanvas();
+void Spheres::initialize() {
+  // Display a loading message
+  matrix->SetBrightness(50);
+  offscreen_canvas->Clear();
+  int center_x = offscreen_canvas->width() / 2;
+  int center_y = offscreen_canvas->height() / 2;
+  char text[] = "Animation loading...";
+  rgb_matrix::Font font;
+  font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+  int text_width = 0;
+  for (char c : std::string(text))
+    text_width += font.CharacterWidth(c);
+  int text_height = font.height();
+  rgb_matrix::DrawText(offscreen_canvas, font, center_x - text_width / 2,
+                       center_y - 3 + text_height / 2,
+                       rgb_matrix::Color(255, 255, 255), nullptr, text);
+  offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
 
   // Initialize first sphere point distribution
   const int numPoints = 700; // Adjust as needed
@@ -186,7 +200,7 @@ Spheres::Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
   // Store the optimized points for rendering
   spherePoints1 = distribution1->getPoints();
 
-  distribution1->optimizeDistribution(13);
+  distribution1->optimizeDistribution(30);
   spherePoints1 = distribution1->getPoints();
 
   // Initialize second sphere point distribution (inner sphere with half radius)
@@ -198,11 +212,16 @@ Spheres::Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
   // Store the optimized points for rendering
   spherePoints2 = distribution2->getPoints();
 
-  distribution2->optimizeDistribution(13);
+  distribution2->optimizeDistribution(30);
   spherePoints2 = distribution2->getPoints();
 }
 
 void Spheres::animate(double time) {
+  if (!initialized) {
+    initialize();
+    initialized = true;
+  }
+
   // Rotation animation around Y and X axes
   double rotationSpeedY = 0.02; // Y axis rotation speed
   double rotationSpeedX =
@@ -264,7 +283,7 @@ void Spheres::animate(double time) {
 
   int centerX = width / 2;
   int centerY = height / 2;
-  int radius = std::min(centerX, centerY) - 1;
+  int radius = std::min(centerX, centerY) - 3;
 
   // Create a depth buffer to handle occlusion
   std::vector<double> depthBuffer(width * height,

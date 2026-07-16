@@ -48,9 +48,15 @@ private:
   SpherePointDistribution *distribution2;
 
   float speed = 60.0f;
+  bool initialized = false;
+
+  void initialize();
 
 public:
-  Spheres(rgb_matrix::RGBMatrix *matrix);
+  Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+    offscreen_canvas = matrix->CreateFrameCanvas();
+  }
+
   void animate(double time) override;
 
   std::string name() const override { return "Spheres"; }

@@ -26,7 +26,7 @@ void MagneticField::spawnMagneticElement(bool initial_spawn = false) {
       float dx = existing_element.x - element.x;
       float dy = existing_element.y - element.y;
       float distance_squared = dx * dx + dy * dy;
-      if (distance_squared < 5200.0f) { // Minimum distance squared
+      if (distance_squared < 7200.0f) { // Minimum distance squared
         valid_position = false;
         break;
       }
@@ -68,10 +68,10 @@ void MagneticField::animate(double time) {
   offscreen_canvas->Clear();
 
   // Create a new magnetic element with a certain probability
-  if (magnetic_elements.size() < 3 ||
+  if (magnetic_elements.size() < 2 ||
       (rand() % 100 < 100.0f * delta_time &&
        magnetic_elements.size() <
-           5)) { // % chance of spawning a new magnetic element
+           3)) { // % chance of spawning a new magnetic element
     spawnMagneticElement();
   }
 

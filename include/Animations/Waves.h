@@ -21,32 +21,14 @@ private:
   float *map;
   int map_size;
   double last_time = 0.0;
+  bool initialized = false;
 
+  void initialize();
   void update_map(double delta_time, int width, int height);
 
 public:
   Waves(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
-    srand(time(0));
     offscreen_canvas = matrix->CreateFrameCanvas();
-
-    // Initialize map
-    map_size = matrix->width() * matrix->height();
-    map = new float[map_size];
-    for (int y = 0; y < matrix->height(); y++) {
-      for (int x = 0; x < matrix->width(); x++) {
-        const int i = y * matrix->width() + x;
-        map[i] = static_cast<float>(std::rand()) / RAND_MAX;
-      }
-    }
-
-    double delta = 0.03;
-    double st = time(0);
-    std::cout << "Initializing Waves animation..." << std::endl;
-    for (double t = 0; t < 13.0; t += delta) {
-      update_map(delta, matrix->width(), matrix->height());
-    }
-    std::cout << "Waves animation initialized in " << (time(0) - st)
-              << " seconds." << std::endl;
   }
 
   ~Waves() { delete[] map; }
@@ -61,7 +43,7 @@ public:
   }
 
   void applyPresetParameters() override {
-    params_.color.value = {255, 40, 0};
+    params_.color.value = {255, 5, 0};
     params_.depth.value = 1;
   }
 

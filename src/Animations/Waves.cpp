@@ -1,8 +1,62 @@
 #include "Animations/Waves.h"
+#include "graphics.h"
 #include <algorithm>
 #include <cstdlib>
 
 namespace animations {
+
+void Waves::initialize() {
+  srand(time(0));
+
+  // Display a loading message
+  matrix->SetBrightness(50);
+  offscreen_canvas->Clear();
+  int center_x = offscreen_canvas->width() / 2;
+  int center_y = offscreen_canvas->height() / 2;
+  char text[] = "Animation loading...";
+  rgb_matrix::Font font;
+  font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+  int text_width = 0;
+  for (char c : std::string(text))
+    text_width += font.CharacterWidth(c);
+  int text_height = font.height();
+  rgb_matrix::DrawText(offscreen_canvas, font, center_x - text_width / 2,
+                       center_y - 3 + text_height / 2,
+                       rgb_matrix::Color(255, 255, 255), nullptr, text);
+  offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+
+  // Initialize map
+  map_size = matrix->width() * matrix->height();
+  map = new float[map_size];
+  for (int y = 0; y < matrix->height(); y++) {
+    for (int x = 0; x < matrix->width(); x++) {
+      const int i = y * matrix->width() + x;
+      map[i] = static_cast<float>(std::rand()) / RAND_MAX;
+    }
+  }
+
+  double delta = 0.03;
+  double st = time(0);
+  std::cout << "Initializing Waves animation..." << std::endl;
+  float max_t = 13.0;
+  for (double t = 0; t < max_t; t += delta) {
+    update_map(delta, matrix->width(), matrix->height());
+    if (fmod(t, delta * 4) <= delta) { // Update display every X steps
+      offscreen_canvas->Clear();
+      rgb_matrix::DrawText(offscreen_canvas, font, center_x - text_width / 2,
+                           center_y - 3 + text_height / 2,
+                           rgb_matrix::Color(255, 255, 255), nullptr, text);
+      rgb_matrix::DrawLine(offscreen_canvas, center_x - text_width / 2,
+                           center_y + 10,
+                           (center_x - text_width / 2) +
+                               static_cast<int>((t / max_t) * text_width),
+                           center_y + 10, rgb_matrix::Color(120, 120, 120));
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+    }
+  }
+  std::cout << "Waves animation initialized in " << (time(0) - st)
+            << " seconds." << std::endl;
+}
 
 void Waves::update_map(double delta_time, int width, int height) {
   // Create a copy of the current map
@@ -64,6 +118,11 @@ void Waves::update_map(double delta_time, int width, int height) {
 }
 
 void Waves::animate(double time) {
+  if (!initialized) {
+    initialize();
+    initialized = true;
+  }
+
   double delta_time = time - this->last_time;
   if (delta_time <= 0.0 || delta_time > 1.0)
     delta_time = 0.03; // Default to ~30ms if time jump is too large

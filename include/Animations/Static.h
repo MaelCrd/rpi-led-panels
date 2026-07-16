@@ -9,16 +9,19 @@ namespace animations {
 
 struct StaticParams : ParameterSet<StaticParams> {
   // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
+  PARAM_COLOR(color, Color(255, 255, 255), "Color")
+
   // Provide tuple of references for iteration
-  auto &tuple() { return empty_tuple; }
-  auto const &tuple() const { return empty_tuple; }
+  auto tuple() { return std::tie(color); }
+  auto const tuple() const { return std::tie(color); }
 };
 
 class Static : public Animation<Static, struct StaticParams> {
 private:
 public:
-  Static(rgb_matrix::RGBMatrix *matrix);
+  Static(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+    offscreen_canvas = matrix->CreateFrameCanvas();
+  };
   void animate(double time) override;
 
   std::string name() const override { return "Static"; }
@@ -26,15 +29,15 @@ public:
   // Override mode parameter methods - Static has no parameters so all modes are
   // the same
   void applyDefaultParameters() override {
-    // No parameters to set
+    params_.color.value = Color(255, 255, 255);
   }
 
   void applyPresetParameters() override {
-    // No parameters to set
+    params_.color.value = Color(255, 0, 0);
   }
 
 protected:
-  int color[3]{0, 0, 0};
+  rgb_matrix::FrameCanvas *offscreen_canvas;
 };
 } // namespace animations
 
