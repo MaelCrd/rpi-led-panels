@@ -1,0 +1,9 @@
+https://accounts.spotify.com/authorize?client_id=XXXXX&response_type=code&redirect_uri=http://127.0.0.1:8888/callback&scope=user-read-playback-state
+
+curl -X POST https://accounts.spotify.com/api/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "code=XXXXX" \       
+  -d "redirect_uri=http://127.0.0.1:8888/callback" \
+  -d "client_id=XXXXX" \
+  -d "client_secret=XXXXX"

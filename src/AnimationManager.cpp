@@ -5,13 +5,16 @@
 #include "Animations/ChristmasTree.h"
 #include "Animations/Clock.h"
 #include "Animations/DropletCircles.h"
+#include "Animations/FlowTubes.h"
 #include "Animations/GameOfLife.h"
+#include "Animations/Glyphs.h"
 #include "Animations/HeightMap.h"
 #include "Animations/Image.h"
 #include "Animations/Lightning.h"
 #include "Animations/MagneticField.h"
 #include "Animations/Matrix.h"
 #include "Animations/Maze.h"
+#include "Animations/Particles.h"
 #include "Animations/Party.h"
 #include "Animations/Random.h"
 #include "Animations/Spheres.h"
@@ -21,11 +24,11 @@
 #include "Animations/Static.h"
 #include "Animations/Test1.h"
 #include "Animations/Waves.h"
-#include <cstdio> // For snprintf
 
 #include "QRCode.h"
 #include "graphics.h"
 #include <arpa/inet.h>
+#include <cstdio> // For snprintf
 #include <cstring>
 #include <iostream>
 #include <net/if.h>
@@ -57,23 +60,26 @@ void AnimationManager::initAnimations() {
   animations.push_back(new HeightMap(matrix));
   animations.push_back(new GameOfLife(matrix, "B3/S23"));
   // animations.push_back(new Static(matrix));
-  animations.push_back(new Clock(matrix));
-  animations.push_back(new Party(matrix));
-  animations.push_back(new Test1(matrix));
+  // animations.push_back(new Clock(matrix));
+  // animations.push_back(new Party(matrix));
+  // animations.push_back(new Test1(matrix));
   animations.push_back(new Stars(matrix));
-  animations.push_back(new DropletCircles(matrix));
+  // animations.push_back(new DropletCircles(matrix));
   animations.push_back(new Matrix(matrix));
   animations.push_back(new Maze(matrix));
-  animations.push_back(new Atom(matrix));
-  animations.push_back(new BirdFlock(matrix));
+  // animations.push_back(new Atom(matrix));
+  // animations.push_back(new BirdFlock(matrix));
   animations.push_back(new Image(matrix));
-  // animations.push_back(new Spheres(matrix));
-  // animations.push_back(new Waves(matrix));
-  animations.push_back(new Lightning(matrix));
-  animations.push_back(new ChristmasTree(matrix));
+  animations.push_back(new Spheres(matrix));
+  animations.push_back(new Waves(matrix));
+  // animations.push_back(new Lightning(matrix));
+  // animations.push_back(new ChristmasTree(matrix));
   animations.push_back(new SpotifyCurrent(matrix));
-  animations.push_back(new Splash(matrix));
+  // animations.push_back(new Splash(matrix));
   animations.push_back(new MagneticField(matrix));
+  // animations.push_back(new FlowTubes(matrix));
+  animations.push_back(new Glyphs(matrix));
+  animations.push_back(new Particles(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};

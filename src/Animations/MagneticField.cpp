@@ -100,6 +100,7 @@ void MagneticField::animate(double time) {
     for (int y = 1; y < offscreen_canvas->height(); y += 3) {
       float force_x = 0;
       float force_y = 0;
+      float total_force = 0;
       float mixed_r = 0, mixed_g = 0, mixed_b = 0;
       for (const auto &element : magnetic_elements) {
         float dx = element.x - x;
@@ -110,6 +111,7 @@ void MagneticField::animate(double time) {
         float force_magnitude = element.strength / distance_squared;
         force_x += force_magnitude * dx;
         force_y += force_magnitude * dy;
+        total_force += force_magnitude;
 
         mixed_r += element.color[0] * force_magnitude;
         mixed_g += element.color[1] * force_magnitude;
@@ -169,6 +171,15 @@ void MagneticField::animate(double time) {
       mixed_r = (mixed_r / max_mixed_value) * 255.0f;
       mixed_g = (mixed_g / max_mixed_value) * 255.0f;
       mixed_b = (mixed_b / max_mixed_value) * 255.0f;
+
+      // temp test
+      float fact = std::pow(total_force * 1000.0f, 0.11f);
+      fact = std::min(fact, 1.0f); // Clamp to 1.0
+      mixed_r = mixed_r * fact;
+      mixed_g = mixed_g * fact;
+      mixed_b = mixed_b * fact;
+      //
+
       auto color = rgb_matrix::Color(static_cast<uint8_t>(mixed_r),
                                      static_cast<uint8_t>(mixed_g),
                                      static_cast<uint8_t>(mixed_b));

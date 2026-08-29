@@ -44,6 +44,8 @@ private:
   const std::string g_refresh_token_str =
       "REMOVED_SECRET"
       "REMOVED_SECRET"
+      "REMOVED_SECRET"
+      "REMOVED_SECRET"
       "REMOVED_SECRET";
 
   struct TrackData {
