@@ -21,8 +21,8 @@ struct ParticlesParams : ParameterSet<ParticlesParams> {
   PARAM_COLOR(color, Color(255, 255, 255), "Color")
   PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
   PARAM_INT(numParticles, 500, 1, 1000, "Number of particles")
-  PARAM_INT(movementType, 0, 0, 3,
-            "Movement type (0: random, 1: circular, 2: sine wave)")
+  PARAM_INT(movementType, 2, 0, 3,
+            "Movement type (0: random, 1: circular, 2: sine wave, 3: erratic)")
 
   // Provide tuple of references for iteration
   auto tuple() {
@@ -55,15 +55,15 @@ public:
   void applyDefaultParameters() override {
     params_.color.value = Color(255, 255, 255);
     params_.fadeSpeed.value = 1.0f;
-    params_.numParticles.value = 500;
-    params_.movementType.value = 1;
+    params_.numParticles.value = 800;
+    params_.movementType.value = 2;
   }
 
   void applyPresetParameters() override {
-    params_.color.value = Color(255, 0, 0);
+    params_.color.value = Color(255, 37, 0);
     params_.fadeSpeed.value = 1.0f;
-    params_.numParticles.value = 500;
-    params_.movementType.value = 1;
+    params_.numParticles.value = 800;
+    params_.movementType.value = 0;
   }
 
 protected:

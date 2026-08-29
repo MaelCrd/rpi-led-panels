@@ -13,7 +13,7 @@ void Particles::animate(double time) {
 
   // If there are no particles, initialize them
   if (particles.empty()) {
-    for (int i = 0; i < 1000; ++i) {
+    for (int i = 0; i < 750; ++i) {
       Particle p;
       p.x = rand() % offscreen_canvas->width();
       p.y = rand() % offscreen_canvas->height();
@@ -35,10 +35,10 @@ void Particles::animate(double time) {
   // Make the grid fade out over time to create a trail effect
   for (auto &row : grid) {
     for (auto &c : row) {
-      float speed = 1.0f * delta_time;
+      float speed = 1.0f * delta_time * params_.fadeSpeed.value;
       c = Color(static_cast<uint8_t>((c.r) * (1.0f - speed)),
-                static_cast<uint8_t>((c.g) * (0.991f - speed)),
-                static_cast<uint8_t>((c.b) * (0.991f - speed)));
+                static_cast<uint8_t>((c.g) * (0.961f - speed)),
+                static_cast<uint8_t>((c.b) * (0.961f - speed)));
     }
   }
 
@@ -144,7 +144,7 @@ void Particles::animate(double time) {
     // Draw particle. The position is a float so to make the particle move
     // smoothly, we draw the neighboring pixels with decreasing intensity based
     // on the distance from the particle's position.
-    int radius = 2; // Radius of influence for the particle
+    int radius = 4; // Radius of influence for the particle
     for (int dx = -radius; dx <= radius; ++dx) {
       for (int dy = -radius; dy <= radius; ++dy) {
         int draw_x = static_cast<int>(p.x) + dx;
@@ -161,10 +161,10 @@ void Particles::animate(double time) {
           pos_y += offscreen_canvas->height();
         if (pos_x < 0)
           pos_x += offscreen_canvas->width();
-        grid[pos_y][pos_x] +=
-            Color(static_cast<uint8_t>(p.color.r * intensity),
-                  static_cast<uint8_t>(p.color.g * intensity),
-                  static_cast<uint8_t>(p.color.b * intensity));
+        auto c = params_.color.value;
+        grid[pos_y][pos_x] += Color(static_cast<uint8_t>(c.r * intensity),
+                                    static_cast<uint8_t>(c.g * intensity),
+                                    static_cast<uint8_t>(c.b * intensity));
       }
     }
   }
