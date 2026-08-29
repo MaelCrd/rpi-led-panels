@@ -56,13 +56,9 @@ struct Color {
                      255, static_cast<int>(b) + static_cast<int>(other.b))));
   }
 
-  constexpr Color operator+=(const Color &other) {
-    return Color(static_cast<uint8_t>(std::min(
-                     255, static_cast<int>(r) + static_cast<int>(other.r))),
-                 static_cast<uint8_t>(std::min(
-                     255, static_cast<int>(g) + static_cast<int>(other.g))),
-                 static_cast<uint8_t>(std::min(
-                     255, static_cast<int>(b) + static_cast<int>(other.b))));
+  constexpr Color &operator+=(const Color &other) {
+    *this = *this + other;
+    return *this;
   }
 
   constexpr Color operator-(const Color &other) const {
