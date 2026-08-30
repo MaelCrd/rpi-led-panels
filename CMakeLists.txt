@@ -46,7 +46,16 @@ set_target_properties(FastSIMD_FastNoise PROPERTIES COMPILE_OPTIONS "${FS_OPTS}"
 # Disable Unity Build for FastNoise as it causes build errors
 # set_target_properties(FastNoise PROPERTIES UNITY_BUILD OFF)
 
-find_package(oatpp 1.4.0 REQUIRED)
+# Disable Oat++ internal tests and installation targets
+set(OATPP_BUILD_TESTS OFF CACHE BOOL "Build oatpp tests" FORCE)
+set(OATPP_INSTALL OFF CACHE BOOL "Install oatpp" FORCE)
+# Add the oatpp submodule directory
+add_subdirectory(deps/oatpp)
+# Create an alias target so existing references to oatpp::oatpp continue to work
+if(NOT TARGET oatpp::oatpp)
+    add_library(oatpp::oatpp ALIAS oatpp)
+endif()
+
 find_package(CURL REQUIRED) # libcurl4-openssl-dev
 
 
@@ -109,6 +118,13 @@ target_include_directories(rpi-led-panels PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/qrcodegen"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/nlohmann_proper"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/FastNoise2/src"
+)
+
+if(NOT DEFINED ASSETS_DIR)
+    set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+target_compile_definitions(rpi-led-panels PRIVATE 
+    ASSETS_DIR="${ASSETS_DIR}"
 )
 
 # Precompile common headers to speed up build
