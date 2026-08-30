@@ -2,19 +2,17 @@
 #define SPOTIFYCURRENT_ANIMATION_H
 
 #include "Animation.h"
+#include "Utils.h"
 #include "parameters/param_system.hpp"
 #include <atomic>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <curl/curl.h>
-#include <fstream>
-#include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <sys/types.h>
-#include <thread>
 #include <vector>
 
 namespace animations {
@@ -39,14 +37,7 @@ struct SpotifyCurrentParams : ParameterSet<SpotifyCurrentParams> {
 
 class SpotifyCurrent : public Animation<SpotifyCurrent, SpotifyCurrentParams> {
 private:
-  const char *client_id = "REMOVED_SECRET";
-  const char *client_secret = "REMOVED_SECRET";
-  const std::string g_refresh_token_str =
-      "REMOVED_SECRET"
-      "REMOVED_SECRET"
-      "REMOVED_SECRET"
-      "REMOVED_SECRET"
-      "REMOVED_SECRET";
+  std::string client_id, client_secret, refresh_token;
 
   struct TrackData {
     std::string id;
@@ -103,6 +94,18 @@ public:
     artists_font.LoadFont("../deps/matrix/fonts/6x10.bdf");
     // font.LoadFont("../fonts/verdana-8pt.bdf");
     // font.LoadFont("../fonts/l_10646-8pt.bdf"); // ok
+
+    // Load environment variables from .env file
+    auto env = utils::loadEnv();
+    if (!std::getenv("SPOTIFY_CLIENT_ID") ||
+        !std::getenv("SPOTIFY_CLIENT_SECRET") ||
+        !std::getenv("SPOTIFY_REFRESH_TOKEN")) {
+      throw std::runtime_error(
+          "Missing Spotify credentials in environment variables");
+    }
+    client_id = std::getenv("SPOTIFY_CLIENT_ID");
+    client_secret = std::getenv("SPOTIFY_CLIENT_SECRET");
+    refresh_token = std::getenv("SPOTIFY_REFRESH_TOKEN");
   }
 
   ~SpotifyCurrent();

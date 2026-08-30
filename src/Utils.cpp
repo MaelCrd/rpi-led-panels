@@ -1,8 +1,11 @@
+#include "Utils.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-
-#include "Utils.h"
+#include <cstdlib>
+#include <fstream>
+#include <string>
+#include <unordered_map>
 
 namespace utils {
 
@@ -153,6 +156,44 @@ int signum(double value) {
   } else {
     return 0;
   }
+}
+
+std::unordered_map<std::string, std::string> loadEnv(const std::string &path) {
+  std::unordered_map<std::string, std::string> env;
+  std::ifstream file(path);
+  std::string line;
+
+  while (std::getline(file, line)) {
+    // Skip empty lines and comments
+    if (line.empty() || line[0] == '#')
+      continue;
+
+    auto pos = line.find('=');
+    if (pos == std::string::npos)
+      continue;
+
+    std::string key = line.substr(0, pos);
+    std::string value = line.substr(pos + 1);
+
+    // Trim whitespace
+    auto trim = [](std::string &s) {
+      s.erase(0, s.find_first_not_of(" \t\r\n"));
+      s.erase(s.find_last_not_of(" \t\r\n") + 1);
+    };
+    trim(key);
+    trim(value);
+
+    // Strip surrounding quotes if present
+    if (value.size() >= 2 && (value.front() == '"' || value.front() == '\'')) {
+      value = value.substr(1, value.size() - 2);
+    }
+
+    env[key] = value;
+    setenv(key.c_str(), value.c_str(),
+           1); // also put it in the real environment (POSIX)
+  }
+
+  return env;
 }
 
 } // namespace utils

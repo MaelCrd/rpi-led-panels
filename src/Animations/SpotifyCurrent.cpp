@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
-#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -16,6 +15,7 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <thread>
 #include <unistd.h>
 
 namespace animations {
@@ -160,7 +160,7 @@ SpotifyCurrent::~SpotifyCurrent() {
 }
 
 bool SpotifyCurrent::init_spotify() {
-  if (!client_id || !client_secret) {
+  if (client_id.empty() || client_secret.empty()) {
     std::cerr << "Client ID or Secret missing.\n";
     return false;
   }
@@ -186,16 +186,16 @@ bool SpotifyCurrent::init_spotify() {
   }
 
   // Try to refresh if we have a refresh token
-  if (!g_refresh_token_str.empty()) {
+  if (refresh_token.empty()) {
     std::string refreshed_token;
     std::string new_refresh_token;
-    if (refresh_user_access_token(this->g_refresh_token_str, this->client_id,
+    if (refresh_user_access_token(this->refresh_token, this->client_id,
                                   this->client_secret, refreshed_token,
                                   new_refresh_token)) {
       this->g_access_token = refreshed_token;
       write_cached_token(token_cache_path, refreshed_token);
       if (!new_refresh_token.empty() &&
-          new_refresh_token != this->g_refresh_token_str) {
+          new_refresh_token != this->refresh_token) {
       }
     }
   }
@@ -673,7 +673,7 @@ bool SpotifyCurrent::fetch_track_info(TrackData &out_data) {
   }
 
   if (response.empty()) {
-    std::cerr << "fetch_track_info: empty response\n";
+    std::cerr << "fetch_track_info: empty response (" << http_code << ")\n";
     return false;
   }
 
