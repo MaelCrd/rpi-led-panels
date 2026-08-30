@@ -40,9 +40,21 @@
 # debug information files
 *.dwo
 
-# deps/
-.cache/
-build/
-
-.vscode
+# Secrets and Local Config
 .env
+*.env
+*.local
+.*_token*
+
+# Development & IDEs
+.vscode/
+.idea/
+compile_commands.json
+*.swp
+*~
+
+# Build & Dependencies
+build/
+.cache/
+bin/
+lib/
