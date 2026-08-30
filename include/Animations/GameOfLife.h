@@ -40,27 +40,11 @@ public:
     params_.speed.value = 1.0;
   }
 
-  ~GameOfLife() override {
-    // Clean up dynamically allocated memory for the grid
-    if (grid) {
-      for (int i = 0; i < matrix->height(); ++i) {
-        delete[] grid[i];
-      }
-      delete[] grid;
-    }
-    if (nextGrid) {
-      for (int i = 0; i < matrix->height(); ++i) {
-        delete[] nextGrid[i];
-      }
-      delete[] nextGrid;
-    }
-  }
-
 protected:
 private:
   // Add private members for the Game of Life grid state
-  bool **grid;
-  bool **nextGrid;
+  std::vector<std::vector<bool>> grid;
+  std::vector<std::vector<bool>> nextGrid;
   uint16_t birthRulesBits = 0;
   uint16_t survivalRulesBits = 0;
   double lastTime = 0;

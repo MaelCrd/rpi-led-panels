@@ -24,8 +24,8 @@ struct HeightMapParams : ParameterSet<HeightMapParams> {
 class HeightMap : public Animation<HeightMap, struct HeightMapParams> {
 private:
   FastNoise::SmartNode<> heightMap;
-  float *newPixels;
-  float *xPos, *yPos, *zPos;
+  std::vector<float> newPixels;
+  std::vector<float> xPos, yPos, zPos;
   std::array<std::array<uint8_t, 3>, 256> colorLookup;
   double last_time = 0;
   float timeZ = 99.0f / 5.0f;
@@ -48,13 +48,6 @@ public:
     params_.style.value = 4;
     params_.color.value = Color(255, 0, 0);
     params_.speed.value = 1.0;
-  }
-
-  ~HeightMap() {
-    delete[] newPixels;
-    delete[] xPos;
-    delete[] yPos;
-    delete[] zPos;
   }
 
 protected:

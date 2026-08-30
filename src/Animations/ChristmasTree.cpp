@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../deps/stb_image.h"
+#include "stb_image.h"
 
 namespace animations {
 

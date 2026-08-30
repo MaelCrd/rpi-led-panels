@@ -104,8 +104,9 @@ public:
     if (!std::getenv("SPOTIFY_CLIENT_ID") ||
         !std::getenv("SPOTIFY_CLIENT_SECRET") ||
         !std::getenv("SPOTIFY_REFRESH_TOKEN")) {
-      throw std::runtime_error(
-          "Missing Spotify credentials in environment variables");
+      std::cerr << "Warning: SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, or "
+                   "SPOTIFY_REFRESH_TOKEN not set in environment.\n";
+      return;
     }
     client_id = std::getenv("SPOTIFY_CLIENT_ID");
     client_secret = std::getenv("SPOTIFY_CLIENT_SECRET");
@@ -142,7 +143,6 @@ public:
     params_.progress_bar_color.value = Color(65, 65, 65);
   }
 
-protected:
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
   rgb_matrix::Font title_font;

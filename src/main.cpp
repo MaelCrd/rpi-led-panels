@@ -1,26 +1,24 @@
-#include "AnimationManager.h"
-
-#include "graphics.h"
-#include "led-matrix.h"
-
-#include <ctime>
 #include <iostream>
 #include <math.h>
+#include <memory>
 #include <oatpp/web/server/HttpRouter.hpp>
 #include <signal.h>
 #include <stdio.h>
+#include <thread>
+#include <time.h>
 #include <unistd.h>
 
+#include "AnimationManager.h"
 #include "AppComponent.hpp"
 #include "controller/MainController.hpp"
+#include "graphics.h"
+#include "led-matrix.h"
 #include "oatpp/network/Server.hpp"
-
-#include <memory>
-#include <thread>
 
 using rgb_matrix::RGBMatrix;
 
-volatile int interrupt_received = 0;
+std::atomic<int> interrupt_received(0);
+
 static void InterruptHandler(int signo) { interrupt_received = 1; }
 
 void runServer(std::shared_ptr<AnimationManager> animManager) {
@@ -62,14 +60,14 @@ void runServer(std::shared_ptr<AnimationManager> animManager) {
   });
 
   /* Print info about server port */
-  OATPP_LOGi("MyApp", "Server running on port {}",
+  OATPP_LOGi("RPi LED Panels", "Server running on port {}",
              connectionProvider->getProperty("port").toString());
 
   /* Run Animation Manager */
   animManager->run(&interrupt_received);
 
   /* Print info about server stopping */
-  OATPP_LOGi("MyApp", "Server stopping...");
+  OATPP_LOGi("RPi LED Panels", "Server stopping...");
 
   /* First, stop the ServerConnectionProvider so we don't accept any new
    * connections */
@@ -98,29 +96,30 @@ int main(int argc, char *argv[]) {
   runtime_options.drop_privileges = -1; // Don't drop privileges
   // defaults.show_refresh_rate = true;
   runtime_options.gpio_slowdown = 4;
-  RGBMatrix *matrix =
-      RGBMatrix::CreateFromFlags(&argc, &argv, &defaults, &runtime_options);
+  std::unique_ptr<RGBMatrix> matrix(
+      RGBMatrix::CreateFromFlags(&argc, &argv, &defaults, &runtime_options));
   if (matrix == NULL)
     return 1;
 
   // It is always good to set up a signal handler to cleanly exit when we
   // receive a CTRL-C for instance. The DrawOnCanvas() routine is looking
   // for that.
-  signal(SIGTERM, InterruptHandler);
-  signal(SIGINT, InterruptHandler);
+  struct sigaction sa{};
+  sa.sa_handler = InterruptHandler;
+  sigemptyset(&sa.sa_mask);
+  sigaction(SIGTERM, &sa, nullptr);
+  sigaction(SIGINT, &sa, nullptr);
 
   ////
 
   oatpp::Environment::init();
 
-  auto animManager = std::make_shared<AnimationManager>(matrix);
+  auto animManager = std::make_shared<AnimationManager>(matrix.get());
   runServer(animManager);
 
   oatpp::Environment::destroy();
 
   // Animation finished. Shut down the RGB matrix.
   matrix->Clear();
-  delete matrix;
-
   return 0;
 }

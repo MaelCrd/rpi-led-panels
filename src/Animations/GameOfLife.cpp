@@ -10,12 +10,8 @@ GameOfLife::GameOfLife(rgb_matrix::RGBMatrix *matrix, const std::string &rules)
   parseRules(rules);
 
   // Initialize the Game of Life grid
-  grid = new bool *[matrix->height()];
-  nextGrid = new bool *[matrix->height()];
-  for (int i = 0; i < matrix->height(); ++i) {
-    grid[i] = new bool[matrix->width()];
-    nextGrid[i] = new bool[matrix->width()];
-  }
+  grid.resize(matrix->height(), std::vector<bool>(matrix->width(), false));
+  nextGrid.resize(matrix->height(), std::vector<bool>(matrix->width(), false));
 
   // Example: Randomly initialize the grid
   for (int y = 0; y < matrix->height(); ++y) {

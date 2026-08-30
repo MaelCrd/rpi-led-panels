@@ -45,11 +45,11 @@ class Spheres : public Animation<Spheres, struct SpheresParams> {
 private:
   std::vector<Point3D> spherePoints1;
   std::vector<Point3D> rotatedPoints1;
-  SpherePointDistribution *distribution1;
+  std::unique_ptr<SpherePointDistribution> distribution1;
 
   std::vector<Point3D> spherePoints2;
   std::vector<Point3D> rotatedPoints2;
-  SpherePointDistribution *distribution2;
+  std::unique_ptr<SpherePointDistribution> distribution2;
 
   float speed = 60.0f;
   bool initialized = false;
@@ -57,9 +57,8 @@ private:
   void initialize();
 
 public:
-  Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
-    offscreen_canvas = matrix->CreateFrameCanvas();
-  }
+  Spheres(rgb_matrix::RGBMatrix *matrix);
+  ~Spheres();
 
   void animate(double time) override;
 
@@ -74,8 +73,6 @@ public:
   void applyPresetParameters() override {
     // No parameters to set
   }
-
-  ~Spheres() override = default;
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;

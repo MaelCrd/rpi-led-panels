@@ -221,10 +221,10 @@ HeightMap::HeightMap(rgb_matrix::RGBMatrix *matrix)
     : Animation(matrix), heightMap(FastNoise::New<FastNoise::Simplex>()) {
   int width = matrix->width();
   int height = matrix->height();
-  newPixels = new float[width * height];
-  xPos = new float[width * height];
-  yPos = new float[width * height];
-  zPos = new float[width * height];
+  newPixels.resize(width * height);
+  xPos.resize(width * height);
+  yPos.resize(width * height);
+  zPos.resize(width * height);
   float frequency = 0.01f;
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {

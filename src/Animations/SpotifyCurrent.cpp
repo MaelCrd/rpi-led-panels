@@ -1,5 +1,5 @@
 #include "Animations/SpotifyCurrent.h"
-#include "../deps/stb_image.h"
+#include "stb_image.h"
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
@@ -187,7 +187,7 @@ bool SpotifyCurrent::init_spotify() {
   }
 
   // Try to refresh if we have a refresh token
-  if (refresh_token.empty()) {
+  if (!refresh_token.empty()) {
     std::string refreshed_token;
     std::string new_refresh_token;
     if (refresh_user_access_token(this->refresh_token, this->client_id,
@@ -197,6 +197,7 @@ bool SpotifyCurrent::init_spotify() {
       write_cached_token(token_cache_path, refreshed_token);
       if (!new_refresh_token.empty() &&
           new_refresh_token != this->refresh_token) {
+        this->refresh_token = new_refresh_token;
       }
     }
   }
@@ -218,7 +219,10 @@ bool SpotifyCurrent::init_spotify() {
       std::cerr << "Failed to fork spotify fetch process\n";
     } else if (pid == 0) {
       // Child process: install signal handler and run worker
-      signal(SIGTERM, child_sigterm_handler);
+      struct sigaction sa{};
+      sa.sa_handler = child_sigterm_handler;
+      sigemptyset(&sa.sa_mask);
+      sigaction(SIGTERM, &sa, nullptr);
       // Reinitialize curl in the child process to avoid using parent's CURL
       if (this->g_curl) {
         curl_easy_cleanup(this->g_curl);

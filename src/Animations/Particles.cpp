@@ -9,6 +9,11 @@ void Particles::animate(double time) {
   double delta_time = time - last_time;
   last_time = time;
 
+  if (delta_time > 0.5) {
+    // If the time difference is too large (e.g., due to a pause), reset it
+    delta_time = 0.08; // Assume a default frame time of 80ms
+  }
+
   offscreen_canvas->Clear();
 
   // If there are no particles, initialize them

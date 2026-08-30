@@ -174,6 +174,12 @@ public:
   }
 };
 
+Spheres::Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+  offscreen_canvas = matrix->CreateFrameCanvas();
+}
+
+Spheres::~Spheres() = default;
+
 void Spheres::initialize() {
   // Display a loading message
   matrix->SetBrightness(50);
@@ -194,7 +200,7 @@ void Spheres::initialize() {
 
   // Initialize first sphere point distribution
   const int numPoints = 700; // Adjust as needed
-  distribution1 = new SpherePointDistribution(numPoints);
+  distribution1 = std::make_unique<SpherePointDistribution>(numPoints);
 
   std::cout << "Optimizing first sphere point distribution..." << std::endl;
   distribution1->printDistributionQuality();
@@ -206,7 +212,8 @@ void Spheres::initialize() {
   spherePoints1 = distribution1->getPoints();
 
   // Initialize second sphere point distribution (inner sphere with half radius)
-  distribution2 = new SpherePointDistribution(numPoints * 0.5, 0.5);
+  distribution2 =
+      std::make_unique<SpherePointDistribution>(numPoints * 0.5, 0.5);
 
   std::cout << "Optimizing second sphere point distribution..." << std::endl;
   distribution2->printDistributionQuality();

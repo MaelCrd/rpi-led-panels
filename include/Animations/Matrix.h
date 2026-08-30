@@ -17,12 +17,12 @@ struct MatrixParams : ParameterSet<MatrixParams> {
 
 class Matrix : public Animation<Matrix, struct MatrixParams> {
 private:
-  int *positions;
+  std::vector<int> positions;
 
 public:
   Matrix(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-    positions = new int[offscreen_canvas->width()];
+    positions.resize(offscreen_canvas->width());
     for (int i = 0; i < offscreen_canvas->width(); ++i)
       positions[i] = -1;
   };
@@ -39,8 +39,6 @@ public:
   void applyPresetParameters() override {
     // No parameters to set
   }
-
-  ~Matrix() override { delete[] positions; }
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;

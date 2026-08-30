@@ -1,5 +1,15 @@
-#include "AnimationManager.h"
+#include <arpa/inet.h>
+#include <chrono>
+#include <iostream>
+#include <net/if.h>
+#include <stdio.h> // For snprintf
+#include <string.h>
+#include <sys/ioctl.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "Animation.h"
+#include "AnimationManager.h"
 #include "Animations/Atom.h"
 #include "Animations/BirdFlock.h"
 #include "Animations/ChristmasTree.h"
@@ -27,28 +37,16 @@
 
 #include "QRCode.h"
 #include "graphics.h"
-#include <arpa/inet.h>
-#include <cstdio> // For snprintf
-#include <cstring>
-#include <iostream>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-
-#include <chrono>
-#include <ctime>
-#include <iostream>
-#include <unistd.h>
 
 using namespace animations;
 
-AnimationManager::~AnimationManager() {
-  // Clean up all animation objects
-  for (auto *animation : animations) {
-    delete animation;
-  }
-  animations.clear();
+AnimationManager::AnimationManager(rgb_matrix::RGBMatrix *matrix)
+    : current_animation_index(-1), matrix(matrix), target_brightness(100),
+      current_brightness(100.0f), target_state(true) {
+  initAnimations();
 }
+
+AnimationManager::~AnimationManager() = default;
 
 void AnimationManager::initAnimations() {
   if (animations_initialized) {
@@ -56,30 +54,30 @@ void AnimationManager::initAnimations() {
   }
 
   // Create animations vector
-  animations.push_back(new Random(matrix));
-  animations.push_back(new HeightMap(matrix));
-  animations.push_back(new GameOfLife(matrix, "B3/S23"));
-  animations.push_back(new Static(matrix));
-  animations.push_back(new Clock(matrix));
-  animations.push_back(new Party(matrix));
-  animations.push_back(new Test1(matrix));
-  animations.push_back(new Stars(matrix));
-  animations.push_back(new DropletCircles(matrix));
-  animations.push_back(new Matrix(matrix));
-  animations.push_back(new Maze(matrix));
-  animations.push_back(new Atom(matrix));
-  animations.push_back(new BirdFlock(matrix));
-  animations.push_back(new Image(matrix));
-  animations.push_back(new Spheres(matrix));
-  animations.push_back(new Waves(matrix));
-  animations.push_back(new Lightning(matrix));
-  animations.push_back(new ChristmasTree(matrix));
-  animations.push_back(new SpotifyCurrent(matrix));
-  animations.push_back(new Splash(matrix));
-  animations.push_back(new MagneticField(matrix));
-  animations.push_back(new FlowTubes(matrix));
-  animations.push_back(new Glyphs(matrix));
-  animations.push_back(new Particles(matrix));
+  animations.push_back(std::make_unique<Random>(matrix));
+  animations.push_back(std::make_unique<HeightMap>(matrix));
+  animations.push_back(std::make_unique<GameOfLife>(matrix, "B3/S23"));
+  animations.push_back(std::make_unique<Static>(matrix));
+  animations.push_back(std::make_unique<Clock>(matrix));
+  animations.push_back(std::make_unique<Party>(matrix));
+  animations.push_back(std::make_unique<Test1>(matrix));
+  animations.push_back(std::make_unique<Stars>(matrix));
+  animations.push_back(std::make_unique<DropletCircles>(matrix));
+  animations.push_back(std::make_unique<Matrix>(matrix));
+  animations.push_back(std::make_unique<Maze>(matrix));
+  animations.push_back(std::make_unique<Atom>(matrix));
+  animations.push_back(std::make_unique<BirdFlock>(matrix));
+  animations.push_back(std::make_unique<Image>(matrix));
+  animations.push_back(std::make_unique<Spheres>(matrix));
+  animations.push_back(std::make_unique<Waves>(matrix));
+  animations.push_back(std::make_unique<Lightning>(matrix));
+  animations.push_back(std::make_unique<ChristmasTree>(matrix));
+  animations.push_back(std::make_unique<SpotifyCurrent>(matrix));
+  animations.push_back(std::make_unique<Splash>(matrix));
+  animations.push_back(std::make_unique<MagneticField>(matrix));
+  animations.push_back(std::make_unique<FlowTubes>(matrix));
+  animations.push_back(std::make_unique<Glyphs>(matrix));
+  animations.push_back(std::make_unique<Particles>(matrix));
 
   // Animation names corresponding to the order above
   animationNames = {};
@@ -111,7 +109,7 @@ nlohmann::json AnimationManager::getAllAnimations() {
   return result;
 }
 
-void AnimationManager::run(volatile int *interrupt_received) {
+void AnimationManager::run(std::atomic<int> *interrupt_received) {
   // Implementation of the run method
 
   // Initialize animations if not already done
@@ -123,14 +121,20 @@ void AnimationManager::run(volatile int *interrupt_received) {
   // test QR code generation
   if (false) {
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    struct ifreq ifr{};
-    strcpy(ifr.ifr_name,
-           "wlan0"); // Change interface name as needed (eth0, wlan0, etc.)
-    ioctl(fd, SIOCGIFADDR, &ifr);
-    close(fd);
+    char ip[INET_ADDRSTRLEN] = {0};
+    if (fd >= 0) {
+      struct ifreq ifr{};
+      strncpy(ifr.ifr_name, "wlan0",
+              sizeof(ifr.ifr_name) -
+                  1); // Change interface name as needed (eth0, wlan0, etc.)
+      ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+      if (ioctl(fd, SIOCGIFADDR, &ifr) == 0) {
+        auto *addr = reinterpret_cast<struct sockaddr_in *>(&ifr.ifr_addr);
+        inet_ntop(AF_INET, &addr->sin_addr, ip, sizeof(ip));
+      }
+      close(fd);
+    }
 
-    char ip[INET_ADDRSTRLEN];
-    strcpy(ip, inet_ntoa(((sockaddr_in *)&ifr.ifr_addr)->sin_addr));
     std::cout << "IP Address: " << ip << std::endl;
 
     std::string text = "http://" + std::string(ip);
@@ -170,7 +174,8 @@ void AnimationManager::run(volatile int *interrupt_received) {
   /////
   int anim_index = getCurrentAnimation();
   int last_index = anim_index;
-  BaseAnimation *current_animation = animations[anim_index % animations.size()];
+  BaseAnimation *current_animation =
+      animations[anim_index % animations.size()].get();
   float animation_fade_duration = 1.0; // seconds for animation transitions
 
   auto start = std::chrono::system_clock::now();
@@ -209,7 +214,7 @@ void AnimationManager::run(volatile int *interrupt_received) {
     if (anim_index != last_index) {
       // Animation change requested
       BaseAnimation *next_animation =
-          animations[anim_index % animations.size()];
+          animations[anim_index % animations.size()].get();
 
       // Check if we should render animation for fade transition
       bool should_do_fade_transition =
@@ -400,7 +405,7 @@ bool AnimationManager::setImageData(int animationId,
 
   // Try to cast to Image animation
   animations::Image *imageAnim =
-      dynamic_cast<animations::Image *>(animations[animationId]);
+      dynamic_cast<animations::Image *>(animations[animationId].get());
   if (!imageAnim) {
     return false; // Not an Image animation
   }
@@ -424,7 +429,7 @@ bool AnimationManager::setImageDataBase64(int animationId,
 
   // Try to cast to Image animation
   animations::Image *imageAnim =
-      dynamic_cast<animations::Image *>(animations[animationId]);
+      dynamic_cast<animations::Image *>(animations[animationId].get());
   if (!imageAnim) {
     return false; // Not an Image animation
   }
@@ -437,8 +442,7 @@ void AnimationManager::updateBrightnessTransition(double deltaTime) {
   // Get current target values (using individual locks to avoid deadlock)
   float effective_target_brightness;
   {
-    std::lock_guard<std::mutex> state_lock(mtx_state);
-    std::lock_guard<std::mutex> brightness_lock(mtx_brightness);
+    std::scoped_lock lock(mtx_state, mtx_brightness); // deadlock-safe
     if (target_state) {
       effective_target_brightness = static_cast<float>(target_brightness);
     } else {
@@ -471,8 +475,7 @@ void AnimationManager::updateBrightnessTransition(double deltaTime) {
 bool AnimationManager::isInTransition() const {
   float effective_target_brightness;
   {
-    std::lock_guard<std::mutex> state_lock(mtx_state);
-    std::lock_guard<std::mutex> brightness_lock(mtx_brightness);
+    std::scoped_lock lock(mtx_state, mtx_brightness); // deadlock-safe
     effective_target_brightness =
         target_state ? static_cast<float>(target_brightness) : 0.0f;
   }

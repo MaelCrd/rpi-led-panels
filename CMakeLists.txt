@@ -96,6 +96,10 @@ set_target_properties(qrcodegen PROPERTIES
 add_dependencies(rgbmatrix rgbmatrix_lib)
 add_dependencies(qrcodegen qrcodegen_lib)
 
+# stb_image header-only library
+add_library(stb_image INTERFACE)
+target_include_directories(stb_image INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
+
 add_executable(rpi-led-panels ${SOURCES})
 
 # Add dependency to ensure library is built first
@@ -109,10 +113,12 @@ target_link_libraries(rpi-led-panels PRIVATE
     qrcodegen
     oatpp::oatpp
     CURL::libcurl
+    stb_image
 )
 
 target_include_directories(rpi-led-panels PRIVATE 
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/qrcodegen"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/nlohmann_proper"

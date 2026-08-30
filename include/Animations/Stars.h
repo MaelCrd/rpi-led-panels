@@ -38,7 +38,7 @@ public:
   Stars(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
     srand(time(0));
-    table = new uint8_t[matrix->width() * matrix->height()];
+    table.resize(matrix->width() * matrix->height());
     for (int i = 0; i < matrix->width() * matrix->height(); ++i)
       if (rand() % 100 < 1)
         table[i] = rand() % 256;
@@ -61,11 +61,9 @@ public:
     params_.shootingStarsColor.value = Color(255, 100, 100);
   }
 
-  ~Stars() override { delete[] table; }
-
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
-  uint8_t *table;
+  std::vector<uint8_t> table;
 };
 } // namespace animations
 
