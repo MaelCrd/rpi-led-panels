@@ -1,12 +1,17 @@
 #ifndef GLYPHS_ANIMATION_H
 #define GLYPHS_ANIMATION_H
 
-#include "Animation.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
 #include <random>
 #include <string>
 #include <tuple>
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
+
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
 
 namespace animations {
 
@@ -57,7 +62,7 @@ private:
 public:
   Glyphs(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-    font.LoadFont("../fonts/NotoSansSC-10.bdf"); // 11 lines, 25 cols
+    font.LoadFont(ASSETS_DIR "/fonts/NotoSansSC-10.bdf"); // 11 lines, 25 cols
     grid.resize(11);
     for (int i = 0; i < grid.size(); ++i) {
       grid[i].resize(25);

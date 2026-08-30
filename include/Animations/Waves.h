@@ -6,6 +6,10 @@
 #include <cmath>
 #include <iostream>
 
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
+
 namespace animations {
 
 struct WavesParams : ParameterSet<WavesParams> {
@@ -18,7 +22,8 @@ struct WavesParams : ParameterSet<WavesParams> {
 
 class Waves : public Animation<Waves, struct WavesParams> {
 private:
-  float *map;
+  std::vector<float> map;
+  std::vector<float> last_map;
   int map_size;
   double last_time = 0.0;
   bool initialized = false;
@@ -31,7 +36,7 @@ public:
     offscreen_canvas = matrix->CreateFrameCanvas();
   }
 
-  ~Waves() { delete[] map; }
+  ~Waves() override = default;
 
   void animate(double time) override;
 

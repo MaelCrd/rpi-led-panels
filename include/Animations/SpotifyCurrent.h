@@ -15,6 +15,10 @@
 #include <sys/types.h>
 #include <vector>
 
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
+
 namespace animations {
 
 struct SpotifyCurrentParams : ParameterSet<SpotifyCurrentParams> {
@@ -90,10 +94,10 @@ private:
 public:
   SpotifyCurrent(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-    title_font.LoadFont("../deps/matrix/fonts/6x12.bdf");
-    artists_font.LoadFont("../deps/matrix/fonts/6x10.bdf");
-    // font.LoadFont("../fonts/verdana-8pt.bdf");
-    // font.LoadFont("../fonts/l_10646-8pt.bdf"); // ok
+    title_font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x12.bdf");
+    artists_font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x10.bdf");
+    // font.LoadFont(ASSETS_DIR "/fonts/verdana-8pt.bdf");
+    // font.LoadFont(ASSETS_DIR "/fonts/l_10646-8pt.bdf"); // ok
 
     // Load environment variables from .env file
     auto env = utils::loadEnv();

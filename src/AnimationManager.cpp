@@ -56,28 +56,28 @@ void AnimationManager::initAnimations() {
   }
 
   // Create animations vector
-  // animations.push_back(new Random(matrix));
+  animations.push_back(new Random(matrix));
   animations.push_back(new HeightMap(matrix));
   animations.push_back(new GameOfLife(matrix, "B3/S23"));
-  // animations.push_back(new Static(matrix));
-  // animations.push_back(new Clock(matrix));
-  // animations.push_back(new Party(matrix));
-  // animations.push_back(new Test1(matrix));
+  animations.push_back(new Static(matrix));
+  animations.push_back(new Clock(matrix));
+  animations.push_back(new Party(matrix));
+  animations.push_back(new Test1(matrix));
   animations.push_back(new Stars(matrix));
-  // animations.push_back(new DropletCircles(matrix));
+  animations.push_back(new DropletCircles(matrix));
   animations.push_back(new Matrix(matrix));
   animations.push_back(new Maze(matrix));
-  // animations.push_back(new Atom(matrix));
-  // animations.push_back(new BirdFlock(matrix));
+  animations.push_back(new Atom(matrix));
+  animations.push_back(new BirdFlock(matrix));
   animations.push_back(new Image(matrix));
   animations.push_back(new Spheres(matrix));
   animations.push_back(new Waves(matrix));
-  // animations.push_back(new Lightning(matrix));
-  // animations.push_back(new ChristmasTree(matrix));
+  animations.push_back(new Lightning(matrix));
+  animations.push_back(new ChristmasTree(matrix));
   animations.push_back(new SpotifyCurrent(matrix));
-  // animations.push_back(new Splash(matrix));
+  animations.push_back(new Splash(matrix));
   animations.push_back(new MagneticField(matrix));
-  // animations.push_back(new FlowTubes(matrix));
+  animations.push_back(new FlowTubes(matrix));
   animations.push_back(new Glyphs(matrix));
   animations.push_back(new Particles(matrix));
 

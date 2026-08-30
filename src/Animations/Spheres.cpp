@@ -34,6 +34,8 @@ public:
     convergenceThreshold = 0.001 / std::sqrt(numPoints); // Seuil adaptatif
   }
 
+  ~SpherePointDistribution() = default;
+
   void initializeRandomPoints() {
     points.clear();
     std::random_device rd;
@@ -180,7 +182,7 @@ void Spheres::initialize() {
   int center_y = offscreen_canvas->height() / 2;
   char text[] = "Animation loading...";
   rgb_matrix::Font font;
-  font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+  font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x12.bdf");
   int text_width = 0;
   for (char c : std::string(text))
     text_width += font.CharacterWidth(c);

@@ -7,6 +7,8 @@
 
 namespace animations {
 
+class BirdFlockImpl;
+
 struct BirdFlockParams : ParameterSet<BirdFlockParams> {
   // Empty tuple for animations with no parameters
   std::tuple<> empty_tuple;
@@ -17,6 +19,8 @@ struct BirdFlockParams : ParameterSet<BirdFlockParams> {
 
 class BirdFlock : public Animation<BirdFlock, struct BirdFlockParams> {
 private:
+  BirdFlockImpl *flockImpl = nullptr;
+
 public:
   BirdFlock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();

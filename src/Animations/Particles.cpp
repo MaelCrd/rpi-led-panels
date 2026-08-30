@@ -136,14 +136,16 @@ void Particles::animate(double time) {
     // accelerating indefinitely
     float target_vxy = 12.0f; // Target velocity magnitude
     float current_vxy = std::sqrt(p.vx * p.vx + p.vy * p.vy);
-    float target_vx = (p.vx / current_vxy) * target_vxy;
-    float target_vy = (p.vy / current_vxy) * target_vxy;
-    p.vx += (target_vx - p.vx) * 0.5f * delta_time;
-    p.vy += (target_vy - p.vy) * 0.5f * delta_time;
+    if (current_vxy > 1e-5f) {
+      float target_vx = (p.vx / current_vxy) * target_vxy;
+      float target_vy = (p.vy / current_vxy) * target_vxy;
+      p.vx += (target_vx - p.vx) * 0.5f * delta_time;
+      p.vy += (target_vy - p.vy) * 0.5f * delta_time;
+    }
 
     // Draw particle. The position is a float so to make the particle move
-    // smoothly, we draw the neighboring pixels with decreasing intensity based
-    // on the distance from the particle's position.
+    // smoothly, we draw the neighboring pixels with decreasing intensity
+    // based on the distance from the particle's position.
     int radius = 4; // Radius of influence for the particle
     for (int dx = -radius; dx <= radius; ++dx) {
       for (int dy = -radius; dy <= radius; ++dy) {

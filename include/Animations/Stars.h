@@ -61,6 +61,8 @@ public:
     params_.shootingStarsColor.value = Color(255, 100, 100);
   }
 
+  ~Stars() override { delete[] table; }
+
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
   uint8_t *table;

@@ -285,10 +285,11 @@ void Lightning::animate(double time) {
           int err = dx - dy;
 
           while (x0 != x1 || y0 != y1) {
-            const int idx = (y0 * width) + x0;
-            pixel_buffer[idx] =
-                std::max(pixel_buffer[idx], static_cast<uint8_t>(brightness));
-
+            if (x0 >= 0 && x0 < width && y0 >= 0 && y0 < height) {
+              const int idx = (y0 * width) + x0;
+              pixel_buffer[idx] =
+                  std::max(pixel_buffer[idx], static_cast<uint8_t>(brightness));
+            }
             const int e2 = 2 * err;
             if (e2 > -dy) {
               err -= dy;

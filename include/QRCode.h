@@ -8,7 +8,7 @@ using namespace qrcodegen;
 
 // Your QR code generation and manipulation functions go here
 
-void generateQR(std::string &text, std::vector<std::vector<bool>> &qr) {
+void inline generateQR(std::string &text, std::vector<std::vector<bool>> &qr) {
   // Manual operation
   std::vector<QrSegment> segs = QrSegment::makeSegments(text.c_str());
   QrCode qr1 = QrCode::encodeSegments(segs, QrCode::Ecc::HIGH, 5, 5, 2, false);

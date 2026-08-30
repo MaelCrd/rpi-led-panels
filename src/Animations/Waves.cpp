@@ -15,7 +15,7 @@ void Waves::initialize() {
   int center_y = offscreen_canvas->height() / 2;
   char text[] = "Animation loading...";
   rgb_matrix::Font font;
-  font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+  font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x12.bdf");
   int text_width = 0;
   for (char c : std::string(text))
     text_width += font.CharacterWidth(c);
@@ -27,13 +27,14 @@ void Waves::initialize() {
 
   // Initialize map
   map_size = matrix->width() * matrix->height();
-  map = new float[map_size];
+  map = std::vector<float>(map_size, 0.0f);
   for (int y = 0; y < matrix->height(); y++) {
     for (int x = 0; x < matrix->width(); x++) {
       const int i = y * matrix->width() + x;
       map[i] = static_cast<float>(std::rand()) / RAND_MAX;
     }
   }
+  last_map = std::vector<float>(map_size, 0.0f);
 
   double delta = 0.03;
   double st = time(0);
@@ -59,10 +60,9 @@ void Waves::initialize() {
 }
 
 void Waves::update_map(double delta_time, int width, int height) {
-  // Create a copy of the current map
-  float *lastMap = new float[width * height];
+  // Copy the current map
   for (int i = 0; i < width * height; i++) {
-    lastMap[i] = this->map[i];
+    last_map[i] = this->map[i];
   }
 
   // Update the map - scale changes by delta_time for consistent speed
@@ -70,7 +70,7 @@ void Waves::update_map(double delta_time, int width, int height) {
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       const int i = y * width + x;
-      const float lastValue = lastMap[i];
+      const float lastValue = last_map[i];
 
       // Decay rate scaled by delta_time (assuming ~60fps baseline)
       float decayFactor = 1.0 - (0.04 * delta_time * 60.0);
@@ -92,7 +92,7 @@ void Waves::update_map(double delta_time, int width, int height) {
             int nY = std::abs((y + v) % height);
 
             const int nI = nY * width + nX;
-            const float nLastValue = lastMap[nI];
+            const float nLastValue = last_map[nI];
 
             if (nLastValue >=
                 (0.5 + 0.04 * (static_cast<float>(std::rand()) / RAND_MAX))) {
@@ -113,8 +113,6 @@ void Waves::update_map(double delta_time, int width, int height) {
       }
     }
   }
-
-  delete[] lastMap;
 }
 
 void Waves::animate(double time) {

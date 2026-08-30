@@ -87,10 +87,11 @@ void FlowTubes::animate(double time) {
     double mu = static_cast<double>(x) / (steps - 1);
     int keyframe_index = static_cast<int>(mu * (w_count - 1));
     double local_mu = (mu * (w_count - 1)) - keyframe_index;
-    double interpolated_value = cosine_interpolate(
-        high[keyframe_index], high[keyframe_index + 1], local_mu);
-    double interpolated_value_low = cosine_interpolate(
-        low[keyframe_index], low[keyframe_index + 1], local_mu);
+    int next_index = std::min(keyframe_index + 1, w_count - 1);
+    double interpolated_value =
+        cosine_interpolate(high[keyframe_index], high[next_index], local_mu);
+    double interpolated_value_low =
+        cosine_interpolate(low[keyframe_index], low[next_index], local_mu);
 
     // 3. Draw the interpolated values on the canvas
     int y_high =
@@ -112,7 +113,7 @@ void FlowTubes::animate(double time) {
   }
 
   offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
-  usleep(1000000 / 490); // ~90 FPS
+  // usleep(1000000 / 490); // ~90 FPS
   last_time = time;
 }
 

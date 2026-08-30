@@ -6,6 +6,10 @@
 #include "parameters/param_system.hpp"
 #include <cmath>
 
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
+
 namespace animations {
 
 struct ChristmasTreeParams : ParameterSet<ChristmasTreeParams> {

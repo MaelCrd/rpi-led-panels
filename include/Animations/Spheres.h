@@ -5,6 +5,10 @@
 #include "parameters/param_system.hpp"
 #include <cmath>
 
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
+
 namespace animations {
 
 struct SpheresParams : ParameterSet<SpheresParams> {
@@ -70,6 +74,8 @@ public:
   void applyPresetParameters() override {
     // No parameters to set
   }
+
+  ~Spheres() override = default;
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;

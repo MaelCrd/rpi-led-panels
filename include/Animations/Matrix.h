@@ -40,6 +40,8 @@ public:
     // No parameters to set
   }
 
+  ~Matrix() override { delete[] positions; }
+
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
 };

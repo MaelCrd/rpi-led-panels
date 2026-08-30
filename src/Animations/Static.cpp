@@ -17,7 +17,7 @@ void Static::animate(double time) {
     }
   }
   offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
-  usleep(1000000 / 20); // ~20 FPS
+  usleep(1000000 / 50); // ~FPS
 }
 
 } // namespace animations

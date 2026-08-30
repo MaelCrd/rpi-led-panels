@@ -1,10 +1,15 @@
 #ifndef CLOCK_ANIMATION_H
 #define CLOCK_ANIMATION_H
 
+#include <cmath>
+
 #include "Animation.h"
 #include "led-matrix.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
+
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
 
 namespace animations {
 
@@ -21,7 +26,7 @@ private:
 public:
   Clock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-    font.LoadFont("../deps/matrix/fonts/6x12.bdf");
+    font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x12.bdf");
   };
   void animate(double time) override;
 

@@ -26,8 +26,8 @@ include_directories(include)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Collect all source files from src directory
-file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.c")
+# Collect all source files from src directory automatically (CONFIGURE_DEPENDS tracks added/removed files)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp" "src/*.c")
 
 set(FASTNOISE2_NOISETOOL OFF CACHE BOOL "Build Noise Tool" FORCE) #example if don't need the graph tool
 add_subdirectory(deps/FastNoise2)
@@ -64,7 +64,6 @@ find_package(CURL REQUIRED) # libcurl4-openssl-dev
 set(RGBMATRIX_LIB "${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib/librgbmatrix.a")
 add_custom_command(
     OUTPUT ${RGBMATRIX_LIB}
-    COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib clean
     COMMAND make -C ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib "CFLAGS=-O3 -g -fPIC -W -Wall -Wextra -Wno-unused-parameter" "CXXFLAGS=-O3 -g -fPIC -fno-exceptions -std=c++17 -W -Wall -Wextra -Wno-unused-parameter"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/lib
     DEPENDS ${CMAKE_CURRENT_LIST_FILE}

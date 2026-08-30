@@ -76,6 +76,8 @@ public:
     updateWind();
   }
 
+  ~BirdFlockImpl() = default;
+
   void updateWind() {
     // Create random wind direction
     float windAngle = (rand() % 360) * M_PI / 180.0f;
@@ -317,9 +319,6 @@ public:
     }
   }
 };
-
-// Static instance for the implementation
-static BirdFlockImpl *flockImpl = nullptr;
 
 void BirdFlock::animate(double time) {
   offscreen_canvas->Clear();

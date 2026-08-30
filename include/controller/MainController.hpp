@@ -81,6 +81,9 @@ public:
 
   ENDPOINT("POST", "/animation/{animId}/parameters", setAnimationParameters,
            PATH(Int32, animId), BODY_STRING(String, body)) {
+    if (body == nullptr || body->empty()) {
+      return createResponse(Status::CODE_400, "Request body is empty");
+    }
     try {
       auto json = nlohmann::json::parse(body->c_str());
       bool success = worker->setAnimationParameters(animId, json);

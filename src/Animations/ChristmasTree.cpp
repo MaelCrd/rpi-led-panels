@@ -12,8 +12,8 @@ void ChristmasTree::animate(double time) {
   // We'll load a set of 4 images and crossfade between them.
   static bool images_loaded = false;
   static const std::vector<std::string> filenames = {
-      "../img/image-4-1.png", "../img/image-4-2.png", "../img/image-4-3.png",
-      "../img/image-4-4.png"};
+      ASSETS_DIR "/img/image-4-1.png", ASSETS_DIR "/img/image-4-2.png",
+      ASSETS_DIR "/img/image-4-3.png", ASSETS_DIR "/img/image-4-4.png"};
 
   // Per-image storage
   static std::vector<std::vector<uint8_t>> images_rgb;

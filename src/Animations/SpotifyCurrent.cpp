@@ -86,11 +86,12 @@ bool read_cached_token(const std::string &path, std::string &token) {
 }
 
 bool write_cached_token(const std::string &path, const std::string &token) {
-  std::ofstream out(path, std::ofstream::trunc);
-  if (!out)
+  int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+  if (fd < 0)
     return false;
-  out << token;
-  return true;
+  ssize_t written = write(fd, token.data(), token.size());
+  close(fd);
+  return written == static_cast<ssize_t>(token.size());
 }
 
 bool refresh_user_access_token(const std::string &refresh_token,

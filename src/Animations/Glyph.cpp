@@ -99,27 +99,27 @@ void Glyphs::animate(double time) {
   offscreen_canvas->Clear();
 
   //   char text[] = "人類社会のすべての構成員の固有の尊厳と平等で譲ることので";
-  //   font.LoadFont("../fonts/NotoSansJP-12.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/NotoSansJP-12.bdf");
   //   char text[] = "⠁ ⠇ ⠓ ⠥ ⠍ ⠕ ⠗ ⠝";
-  //   font.LoadFont("../fonts/NotoSansSymbols2-7.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/NotoSansSymbols2-7.bdf");
   //
   //   char text[] = "於對人類家庭所有成員嘅固有尊嚴及其平等";
-  //   font.LoadFont("../fonts/WDXLLubrifontSC-10.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/WDXLLubrifontSC-10.bdf");
 
   //   char text[] = "모든 사람은 의견의 자유와 표현의 자";
-  //   font.LoadFont("../fonts/NotoSansKR-10.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/NotoSansKR-10.bdf");
 
   //   char text[] = "᚛ᚌᚔᚚ ᚓ ᚈᚔᚄᚓᚇ ᚔᚅ ᚃᚐᚔᚇᚉ";
-  //   font.LoadFont("../fonts/NotoSansOgham-13.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/NotoSansOgham-13.bdf");
 
   //   char text[] = "Hello text to test";
-  //   font.LoadFont("../fonts/JacquardaBastarda9-13.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/JacquardaBastarda9-13.bdf");
 
   //   char text[] = "taulduzeicfyklzjgfehrxj,gfker";
-  //   font.LoadFont("../fonts/Linefont-13.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/Linefont-13.bdf");
 
   //   char text[] = "azertyuiopqsdfghjklmwxcvbna";
-  //   font.LoadFont("../fonts/Wavefont-32.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/Wavefont-32.bdf");
 
   //////////////////
   // CHINESE FONT //
@@ -231,7 +231,7 @@ void Glyphs::animate(double time) {
   //   //////////////////
   //   // BARCODE FONT //
   //   //////////////////
-  //   font.LoadFont("../fonts/LibreBarcode128-32.bdf");
+  //   font.LoadFont(ASSETS_DIR "/fonts/LibreBarcode128-32.bdf");
 
   //   int text_height = font.height();
   //   int line = 0;
@@ -263,7 +263,7 @@ void Glyphs::animate(double time) {
   //   //////////////////
 
   offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
-  usleep(1000000 / 160); // FPS
+  usleep(1000000 / 160); // Cap at 160 FPS to avoid visual flickering
 }
 
 } // namespace animations
