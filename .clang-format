@@ -1,0 +1,18 @@
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: Latest
+
+# Layout & Indentation (Matches clangd defaults)
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 80
+AccessModifierOffset: -2
+NamespaceIndentation: None
+
+# Pointers & References
+PointerAlignment: Right
+
+# Cleanups
+FixNamespaceComments: true
+SortIncludes: CaseSensitive
