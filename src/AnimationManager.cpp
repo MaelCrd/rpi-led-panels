@@ -35,7 +35,7 @@
 #include "Animations/Random.h"
 #include "Animations/Spheres.h"
 #include "Animations/Splash.h"
-#include "Animations/SpotifyCurrent.h"
+#include "Animations/SpotifyCurrent/SpotifyCurrent.h"
 #include "Animations/Stars.h"
 #include "Animations/Static.h"
 #include "Animations/Test1.h"
