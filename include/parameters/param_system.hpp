@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm> // For std::min, std::max, std::clamp
 #include <cstdio>    // For snprintf
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
@@ -282,9 +283,15 @@ template <typename Derived> struct ParameterSet {
             hex_str = hex_str.substr(1);
           }
           if (hex_str.size() == 6) {
-            uint32_t hex_value = std::stoul(hex_str, nullptr, 16);
-            p.value = Color(hex_value);
-            changed = true;
+            try {
+              uint32_t hex_value = std::stoul(hex_str, nullptr, 16);
+              p.value = Color(hex_value);
+              changed = true;
+            } catch (const std::exception &) {
+              // Invalid hex format
+              std::cerr << "Invalid hex color format: " << colorHex
+                        << std::endl;
+            }
           }
         } else if constexpr (std::is_same_v<VT, std::string>) {
           // For string parameters, set the value directly

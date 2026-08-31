@@ -19,12 +19,10 @@ struct BirdFlockParams : ParameterSet<BirdFlockParams> {
 
 class BirdFlock : public Animation<BirdFlock, struct BirdFlockParams> {
 private:
-  BirdFlockImpl *flockImpl = nullptr;
+  std::unique_ptr<BirdFlockImpl> flockImpl;
 
 public:
-  BirdFlock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
-    offscreen_canvas = matrix->CreateFrameCanvas();
-  };
+  BirdFlock(rgb_matrix::RGBMatrix *matrix);
   void animate(double time) override;
 
   std::string name() const override { return "BirdFlock"; }
@@ -38,6 +36,8 @@ public:
   void applyPresetParameters() override {
     // No parameters to set
   }
+
+  ~BirdFlock();
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;

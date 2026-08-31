@@ -21,7 +21,7 @@ void Image::animate(double time) {
   std::lock_guard<std::mutex> lock(image_mutex);
 
   // Refresh cache if needed
-  if (!cache_valid) {
+  if (!cache_valid.load(std::memory_order_acquire)) {
     refreshCache();
   }
 
@@ -71,13 +71,14 @@ void Image::animate(double time) {
 void Image::setImageData(const std::vector<uint8_t> &data, int width,
                          int height) {
   std::lock_guard<std::mutex> lock(image_mutex);
+  std::lock_guard<std::mutex> param_lock(params_mutex_);
 
   // Validate input
   if (width <= 0 || height <= 0 ||
       data.size() != static_cast<size_t>(width * height * 3)) {
     params_.image_data.value.clear();
     cached_rgb_data.clear();
-    cache_valid = false;
+    cache_valid.store(false, std::memory_order_release);
     return;
   }
 
@@ -87,18 +88,19 @@ void Image::setImageData(const std::vector<uint8_t> &data, int width,
 
   // Update cache
   cached_rgb_data = data;
-  cache_valid = true;
+  cache_valid.store(true, std::memory_order_release);
 }
 
 void Image::setImageDataBase64(const std::string &base64_data, int width,
                                int height) {
   std::lock_guard<std::mutex> lock(image_mutex);
+  std::lock_guard<std::mutex> param_lock(params_mutex_);
 
   // Validate dimensions
   if (width <= 0 || height <= 0) {
     params_.image_data.value.clear();
     cached_rgb_data.clear();
-    cache_valid = false;
+    cache_valid.store(false, std::memory_order_release);
     return;
   }
 
@@ -109,7 +111,7 @@ void Image::setImageDataBase64(const std::string &base64_data, int width,
   if (decoded_data.size() != expected_size) {
     params_.image_data.value.clear();
     cached_rgb_data.clear();
-    cache_valid = false;
+    cache_valid.store(false, std::memory_order_release);
     return;
   }
 
@@ -118,29 +120,33 @@ void Image::setImageDataBase64(const std::string &base64_data, int width,
 
   // Update cache
   cached_rgb_data = decoded_data;
-  cache_valid = true;
+  cache_valid.store(true, std::memory_order_release);
 }
 
 void Image::clearImage() {
   std::lock_guard<std::mutex> lock(image_mutex);
+  std::lock_guard<std::mutex> param_lock(params_mutex_);
 
   params_.image_data.value.clear();
   cached_rgb_data.clear();
-  cache_valid = false;
+  cache_valid.store(false, std::memory_order_release);
 }
 
 void Image::onParametersChanged() {
-  std::lock_guard<std::mutex> lock(image_mutex);
-  cache_valid = false;
+  cache_valid.store(false, std::memory_order_release);
 }
 
 void Image::refreshCache() {
   // Decode the base64 data from parameters
-  const std::string &base64_data = params_.image_data.value;
+  std::string base64_data;
+  {
+    std::lock_guard<std::mutex> lock(params_mutex_);
+    base64_data = params_.image_data.value;
+  }
 
   if (base64_data.empty()) {
     cached_rgb_data.clear();
-    cache_valid = true;
+    cache_valid.store(true, std::memory_order_release);
     return;
   }
 
@@ -157,7 +163,7 @@ void Image::refreshCache() {
 
   if (!rgb_data) {
     cached_rgb_data.clear();
-    cache_valid = true;
+    cache_valid.store(true, std::memory_order_release);
     return;
   }
 
@@ -172,7 +178,7 @@ void Image::refreshCache() {
   // Free stb_image memory
   stbi_image_free(rgb_data);
 
-  cache_valid = true;
+  cache_valid.store(true, std::memory_order_release);
 }
 
 } // namespace animations

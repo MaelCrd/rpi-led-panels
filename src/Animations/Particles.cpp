@@ -99,7 +99,7 @@ void Particles::animate(double time) {
 
       // Add sine wave oscillation perpendicular to the velocity vector
       float angle = std::atan2(p.vy, p.vx);
-      float sine_amplitude = 0.1f; // Amplitude of the sine wave
+      float sine_amplitude = 0.3f; // Amplitude of the sine wave
       float sine_frequency = 2.9f; // Frequency of the sine wave
       p.vx += sine_amplitude *
               std::sin(sine_frequency * time + p.random_factor * M_PI * 2.0f) *
@@ -151,7 +151,15 @@ void Particles::animate(double time) {
     // Draw particle. The position is a float so to make the particle move
     // smoothly, we draw the neighboring pixels with decreasing intensity
     // based on the distance from the particle's position.
-    int radius = 4; // Radius of influence for the particle
+    int radius = 2; // Radius of influence for the particle
+    //////////////////
+    //////////////////
+    //////////////////
+    //////////////////
+    //////////////////
+    //////////////////
+    //////////////////
+    //////////////////
     for (int dx = -radius; dx <= radius; ++dx) {
       for (int dy = -radius; dy <= radius; ++dy) {
         int draw_x = static_cast<int>(p.x) + dx;

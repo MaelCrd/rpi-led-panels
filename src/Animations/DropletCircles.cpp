@@ -7,8 +7,11 @@
 namespace animations {
 
 void DropletCircles::animate(double time) {
+  double delta_time = time - last_time;
+  last_time = time;
+
   // At random times, spawn a new droplet
-  if (rand() % 100 < 1) { // % chance each frame
+  if (rand() % 100 < 1.0f * delta_time * 4.0f) { // % chance each frame
     Droplet droplet;
     droplet.x = rand() % matrix->width();
     droplet.y = rand() % matrix->height();

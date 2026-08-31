@@ -155,7 +155,7 @@ void Glyphs::animate(double time) {
 
       // auto target_color = Color(255, 255, 255);
       // auto target_color = Color(0, 0, 0);
-      auto target_color = params_.styableColor.value;
+      auto target_color = params_.stableColor.value;
       int min_change = 1; // Minimum change per frame to avoid stalling
       grid[i][j].color.r +=
           utils::signum(target_color.r - grid[i][j].color.r) *

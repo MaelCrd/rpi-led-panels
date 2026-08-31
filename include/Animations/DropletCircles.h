@@ -26,6 +26,7 @@ class DropletCircles
     : public Animation<DropletCircles, struct DropletCirclesParams> {
 private:
   std::vector<Droplet> droplets;
+  double last_time = 0.0;
 
 public:
   DropletCircles(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {

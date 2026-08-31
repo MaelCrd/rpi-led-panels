@@ -320,13 +320,20 @@ public:
   }
 };
 
+BirdFlock::BirdFlock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+  offscreen_canvas = matrix->CreateFrameCanvas();
+  flockImpl = std::make_unique<BirdFlockImpl>(offscreen_canvas->width(),
+                                              offscreen_canvas->height());
+}
+
+BirdFlock::~BirdFlock() = default;
+
 void BirdFlock::animate(double time) {
   offscreen_canvas->Clear();
 
-  // Initialize on first call
-  if (!flockImpl) {
-    flockImpl = new BirdFlockImpl(offscreen_canvas->width(),
-                                  offscreen_canvas->height());
+  if (flockImpl == nullptr) {
+    flockImpl = std::make_unique<BirdFlockImpl>(offscreen_canvas->width(),
+                                                offscreen_canvas->height());
   }
 
   // Update bird positions

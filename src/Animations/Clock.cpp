@@ -10,7 +10,9 @@ void Clock::animate(double _) {
   // Get current time
   time_t now = time(nullptr);
 
-  tm *local_time = localtime(&now);
+  struct tm result;
+  struct tm *local_time = localtime_r(&now, &result);
+  localtime_r(&now, &result);
   int hours = local_time->tm_hour;
   int minutes = local_time->tm_min;
   int seconds = local_time->tm_sec;

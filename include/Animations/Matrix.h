@@ -18,6 +18,7 @@ struct MatrixParams : ParameterSet<MatrixParams> {
 class Matrix : public Animation<Matrix, struct MatrixParams> {
 private:
   std::vector<int> positions;
+  double last_time = 0.0;
 
 public:
   Matrix(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {

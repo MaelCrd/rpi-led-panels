@@ -8,15 +8,10 @@ if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
 endif()
 
-# Use LLD linker if available
-find_program(LLD_PROGRAM lld)
-if(LLD_PROGRAM)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=lld")
-endif()
+# Note: LLD is not used because it cannot process GCC's LTO (GIMPLE) objects.
 
-# Enable Unity Build for faster compilation
+# Unity Build (Jumbo build) batches .cpp files to dramatically speed up clean builds.
+# Uncomment the line below to re-enable Unity Build:
 # set(CMAKE_UNITY_BUILD ON)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -43,11 +38,14 @@ list(APPEND FS_OPTS "-flax-vector-conversions")
 set_target_properties(FastSIMD_FastNoise PROPERTIES COMPILE_OPTIONS "${FS_OPTS}")
 
 
-# Disable Unity Build for FastNoise as it causes build errors
-# set_target_properties(FastNoise PROPERTIES UNITY_BUILD OFF)
+# Ensure FastNoise/FastSIMD targets stay separate if Unity Build is re-enabled
+set_target_properties(FastNoise PROPERTIES UNITY_BUILD OFF)
+set_target_properties(FastSIMD PROPERTIES UNITY_BUILD OFF)
+set_target_properties(FastSIMD_FastNoise PROPERTIES UNITY_BUILD OFF)
 
-# Disable Oat++ internal tests and installation targets
+# Disable Oat++ internal tests, test library, and installation targets
 set(OATPP_BUILD_TESTS OFF CACHE BOOL "Build oatpp tests" FORCE)
+set(OATPP_LINK_TEST_LIBRARY OFF CACHE BOOL "Link oatpp test library" FORCE)
 set(OATPP_INSTALL OFF CACHE BOOL "Install oatpp" FORCE)
 # Add the oatpp submodule directory
 add_subdirectory(deps/oatpp)
@@ -109,6 +107,8 @@ add_dependencies(rpi-led-panels qrcodegen_lib)
 ####
 target_link_libraries(rpi-led-panels PRIVATE
     FastNoise2
+    FastSIMD
+    FastSIMD_FastNoise
     rgbmatrix
     qrcodegen
     oatpp::oatpp

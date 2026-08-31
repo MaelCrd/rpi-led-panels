@@ -4,6 +4,7 @@
 #include "Animation.h"
 #include "parameters/param_system.hpp"
 #include <cmath>
+#include <random>
 
 namespace animations {
 
@@ -21,6 +22,8 @@ private:
   std::vector<double> evolution_values;
   std::vector<double> high;
   std::vector<double> low;
+
+  std::mt19937 gen{std::random_device{}()};
 
   double last_time = 0;
 

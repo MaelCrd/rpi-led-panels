@@ -3,6 +3,7 @@
 
 #include "Animation.h"
 #include "parameters/param_system.hpp"
+#include <atomic>
 #include <mutex>
 #include <vector>
 
@@ -22,7 +23,7 @@ class Image : public Animation<Image, struct ImageParams> {
 private:
   // Cached decoded RGB data for performance
   std::vector<uint8_t> cached_rgb_data;
-  bool cache_valid;
+  std::atomic<bool> cache_valid{false};
   mutable std::mutex image_mutex;
   int width;        // Matrix width (hardcoded)
   int height;       // Matrix height (hardcoded)

@@ -38,17 +38,17 @@ struct GlyphChar {
 struct GlyphsParams : ParameterSet<GlyphsParams> {
   // Parameter definitions for the Glyphs animation
   PARAM_COLOR(color, Color(255, 0, 0), "Color")
-  PARAM_COLOR(styableColor, Color(255, 255, 255), "Stable color")
+  PARAM_COLOR(stableColor, Color(255, 255, 255), "Stable color")
   PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
   PARAM_FLOAT(spawnChance, 1.0f, 0.01, 3, "Spawn chance")
   PARAM_FLOAT(jitterChance, 1.0f, 0.0, 5, "Jitter chance")
 
   // Provide tuple of references for iteration
   auto tuple() {
-    return std::tie(color, styableColor, fadeSpeed, spawnChance, jitterChance);
+    return std::tie(color, stableColor, fadeSpeed, spawnChance, jitterChance);
   }
   auto const tuple() const {
-    return std::tie(color, styableColor, fadeSpeed, spawnChance, jitterChance);
+    return std::tie(color, stableColor, fadeSpeed, spawnChance, jitterChance);
   }
 };
 
@@ -79,7 +79,7 @@ public:
   // the same
   void applyDefaultParameters() override {
     params_.color.value = Color(255, 0, 0);
-    params_.styableColor.value = Color(255, 255, 255);
+    params_.stableColor.value = Color(255, 255, 255);
     params_.fadeSpeed.value = 0.4f;
     params_.spawnChance.value = 1.0f;
     params_.jitterChance.value = 1.0f;
@@ -87,7 +87,7 @@ public:
 
   void applyPresetParameters() override {
     params_.color.value = Color(255, 47, 0);
-    params_.styableColor.value = Color(5, 5, 5);
+    params_.stableColor.value = Color(5, 5, 5);
     params_.fadeSpeed.value = 0.48f;
     params_.spawnChance.value = 0.46f;
     params_.jitterChance.value = 1.09f;

@@ -20,8 +20,6 @@ void FlowTubes::animate(double time) {
   offscreen_canvas->Clear();
 
   // Setup modern C++ random number generation
-  std::random_device rd;
-  std::mt19937 gen(rd());
   std::uniform_real_distribution<double> dis(0.0, 1.0);
 
   if (evolution_values.empty()) {

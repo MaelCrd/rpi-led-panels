@@ -113,10 +113,8 @@ int main(int argc, char *argv[]) {
   ////
 
   oatpp::Environment::init();
-
   auto animManager = std::make_shared<AnimationManager>(matrix.get());
   runServer(animManager);
-
   oatpp::Environment::destroy();
 
   // Animation finished. Shut down the RGB matrix.

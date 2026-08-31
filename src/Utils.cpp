@@ -87,13 +87,14 @@ static const uint8_t hue_to_rgb_table[360][3] = {
 void hsvToRgb(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b) {
   // For fast lookup when s=1 and v=1, use the precalculated table
   if (s >= 0.99f && v >= 0.99f) {
-    // Ensure h is in range [0, 360)
-    while (h < 0)
+    if (!std::isfinite(h)) {
+      r = g = b = 0;
+      return;
+    }
+    h = std::fmod(h, 360.0f);
+    if (h < 0.0f)
       h += 360.0f;
-    while (h >= 360.0f)
-      h -= 360.0f;
-
-    int hue_index = (int)h;
+    int hue_index = std::clamp(static_cast<int>(h), 0, 359);
     r = hue_to_rgb_table[hue_index][0];
     g = hue_to_rgb_table[hue_index][1];
     b = hue_to_rgb_table[hue_index][2];

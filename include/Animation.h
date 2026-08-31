@@ -4,6 +4,7 @@
 #include "led-matrix.h"
 #include "parameters/param_system.hpp"
 #include <cmath>
+#include <mutex>
 #include <nlohmann/json.hpp>
 
 namespace animations {
@@ -20,6 +21,7 @@ class BaseAnimation {
 protected:
   rgb_matrix::RGBMatrix *matrix;
   AnimationMode mode_;
+  mutable std::mutex params_mutex_;
 
 public:
   BaseAnimation(rgb_matrix::RGBMatrix *matrix)
@@ -34,10 +36,14 @@ public:
 
   // Mode management
   virtual void setMode(AnimationMode mode) {
+    std::lock_guard<std::mutex> lock(params_mutex_);
     mode_ = mode;
     applyModeParameters();
   }
-  AnimationMode getMode() const { return mode_; }
+  AnimationMode getMode() const {
+    std::lock_guard<std::mutex> lock(params_mutex_);
+    return mode_;
+  }
 
   // Virtual methods for mode-specific parameter handling
   virtual void applyDefaultParameters() = 0;
@@ -62,12 +68,14 @@ public:
   Params const &params() const { return params_; }
 
   nlohmann::json parametersJson() const override {
+    std::lock_guard<std::mutex> lock(params_mutex_);
     auto json = params_.toJson();
-    json["mode"] = static_cast<int>(getMode());
+    json["mode"] = static_cast<int>(mode_);
     return json;
   }
 
   bool setParameter(std::string_view internalName, double value) override {
+    std::lock_guard<std::mutex> lock(params_mutex_);
     bool ok = params_.setByName(internalName, value);
     if (ok) {
       // If we're setting a parameter manually, switch to Custom mode
@@ -82,6 +90,7 @@ public:
 
   bool setParameter(std::string_view internalName,
                     std::string_view colorValue) override {
+    std::lock_guard<std::mutex> lock(params_mutex_);
     bool ok = params_.setByName(internalName, colorValue);
     if (ok) {
       // If we're setting a parameter manually, switch to Custom mode
@@ -96,6 +105,7 @@ public:
 
   // Override base class mode handling
   void setMode(AnimationMode mode) override {
+    std::lock_guard<std::mutex> lock(params_mutex_);
     mode_ = mode;
     applyModeParameters();
     static_cast<Derived *>(const_cast<Animation *>(this))
