@@ -22,7 +22,7 @@ jobs:
       - name: Run clang-format dry-run
         run: |
           find src include -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.c" \) \
-            | xargs clang-format --dry-run --Werror
+            | xargs clang-format-19 --dry-run --Werror
   build:
     runs-on: ubuntu-latest
     
