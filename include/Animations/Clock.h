@@ -2,9 +2,12 @@
 #define CLOCK_ANIMATION_H
 
 #include <cmath>
+#include <string>
+#include <tuple>
+
+#include "led-matrix.h"
 
 #include "Animation.h"
-#include "led-matrix.h"
 #include "parameters/param_system.hpp"
 
 #ifndef ASSETS_DIR
@@ -14,20 +17,21 @@
 namespace animations {
 
 struct ClockParams : ParameterSet<ClockParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 class Clock : public Animation<Clock, struct ClockParams> {
-private:
 public:
   Clock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
     font.LoadFont(ASSETS_DIR "/deps/matrix/fonts/6x12.bdf");
-  };
+  }
+
   void animate(double time) override;
 
   std::string name() const override { return "Clock"; }

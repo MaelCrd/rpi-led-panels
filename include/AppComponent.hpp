@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "oatpp/json/ObjectMapper.hpp"
 #include "oatpp/macro/component.hpp"
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"

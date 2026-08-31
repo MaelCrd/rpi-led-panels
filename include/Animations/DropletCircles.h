@@ -1,18 +1,26 @@
 #ifndef DROPLETCIRCLES_ANIMATION_H
 #define DROPLETCIRCLES_ANIMATION_H
 
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 namespace animations {
 
 struct DropletCirclesParams : ParameterSet<DropletCirclesParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 struct Droplet {
@@ -24,15 +32,12 @@ struct Droplet {
 
 class DropletCircles
     : public Animation<DropletCircles, struct DropletCirclesParams> {
-private:
-  std::vector<Droplet> droplets;
-  double last_time = 0.0;
-
 public:
   DropletCircles(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     srand(time(0));
     offscreen_canvas = matrix->CreateFrameCanvas();
   }
+
   void animate(double time) override;
 
   std::string name() const override { return "DropletCircles"; }
@@ -50,6 +55,10 @@ public:
 protected:
   int color[3]{0, 0, 0};
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  std::vector<Droplet> droplets;
+  double last_time = 0.0;
 };
 } // namespace animations
 

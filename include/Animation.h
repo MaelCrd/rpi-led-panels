@@ -1,11 +1,15 @@
 #ifndef ANIMATION_H
 #define ANIMATION_H
 
-#include "led-matrix.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
 #include <mutex>
+#include <string>
+#include <string_view>
+
 #include <nlohmann/json.hpp>
+
+#include "led-matrix.h"
+#include "parameters/param_system.hpp"
 
 namespace animations {
 
@@ -18,15 +22,11 @@ enum class AnimationMode {
 
 // Non-templated base class for polymorphic usage
 class BaseAnimation {
-protected:
-  rgb_matrix::RGBMatrix *matrix;
-  AnimationMode mode_;
-  mutable std::mutex params_mutex_;
-
 public:
   BaseAnimation(rgb_matrix::RGBMatrix *matrix)
       : matrix(matrix), mode_(AnimationMode::Default) {}
   virtual ~BaseAnimation() = default;
+
   virtual void animate(double time) = 0;
   virtual nlohmann::json parametersJson() const = 0;
   virtual bool setParameter(std::string_view internalName, double value) = 0;
@@ -49,20 +49,24 @@ public:
   virtual void applyDefaultParameters() = 0;
   virtual void applyPresetParameters() = 0;
   virtual void applyModeParameters() = 0;
+
+protected:
+  rgb_matrix::RGBMatrix *matrix;
+  AnimationMode mode_;
+  mutable std::mutex params_mutex_;
 };
 
 template <typename Derived, typename ParamStruct>
 class Animation : public BaseAnimation {
-protected:
-  ParamStruct params_;
-
 public:
+  using Params = ParamStruct;
+
   Animation(rgb_matrix::RGBMatrix *matrix) : BaseAnimation(matrix) {
     applyModeParameters(); // Initialize with default parameters
   }
-  virtual void animate(double time) = 0;
+  virtual ~Animation() = default;
 
-  using Params = ParamStruct;
+  virtual void animate(double time) = 0;
 
   Params &params() { return params_; }
   Params const &params() const { return params_; }
@@ -145,6 +149,9 @@ public:
 
   // Default hook
   void onParametersChanged() {}
+
+protected:
+  ParamStruct params_;
 };
 
 } // namespace animations

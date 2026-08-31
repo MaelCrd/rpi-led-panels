@@ -1,4 +1,6 @@
 #include "Animations/Party.h"
+
+#include <cstdint>
 #include <cstdlib>
 #include <unistd.h>
 

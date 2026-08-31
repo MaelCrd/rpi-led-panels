@@ -1,20 +1,24 @@
 #ifndef MAGNETIC_FIELD_ANIMATION_H
 #define MAGNETIC_FIELD_ANIMATION_H
 
+#include <cmath>
+#include <cstdint>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 namespace animations {
 
 struct MagneticFieldParams : ParameterSet<MagneticFieldParams> {
-  // Empty tuple for animations with no parameters
-  PARAM_FLOAT(speed, 1.0, 0.1, 3, "Speed")
-  PARAM_COLOR(color, Color(0, 0, 0), "Color")
-
   // Provide tuple of references for iteration
   auto tuple() { return std::tie(speed, color); }
   auto tuple() const { return std::tie(speed, color); }
+
+  PARAM_FLOAT(speed, 1.0, 0.1, 3, "Speed")
+  PARAM_COLOR(color, Color(0, 0, 0), "Color")
 };
 
 struct MagneticElement {
@@ -28,20 +32,11 @@ struct MagneticElement {
 
 class MagneticField
     : public Animation<MagneticField, struct MagneticFieldParams> {
-private:
-  // Initialize a vector with one magnetic element for testing
-  std::vector<MagneticElement> magnetic_elements =
-      {}; // {100, 50, 1.0f, 50.0f, 0.0f, {255, 0, 0}}
-  double last_time = 0;
-  bool initialized = false;
-
-  void setup();
-  void spawnMagneticElement(bool initial_spawn);
-
 public:
   MagneticField(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-  };
+  }
+
   void animate(double time) override;
 
   std::string name() const override { return "MagneticField"; }
@@ -61,6 +56,16 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  void setup();
+  void spawnMagneticElement(bool initial_spawn);
+
+  // Initialize a vector with one magnetic element for testing
+  std::vector<MagneticElement> magnetic_elements =
+      {}; // {100, 50, 1.0f, 50.0f, 0.0f, {255, 0, 0}}
+  double last_time = 0;
+  bool initialized = false;
 };
 } // namespace animations
 

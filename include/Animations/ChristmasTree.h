@@ -1,10 +1,13 @@
 #ifndef CHRISTMASTREE_ANIMATION_H
 #define CHRISTMASTREE_ANIMATION_H
 
-#include "Animation.h"
-#include "led-matrix.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
+#include <string>
+
+#include "led-matrix.h"
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
 
 #ifndef ASSETS_DIR
 #define ASSETS_DIR ".."
@@ -24,11 +27,11 @@ struct ChristmasTreeParams : ParameterSet<ChristmasTreeParams> {
 
 class ChristmasTree
     : public Animation<ChristmasTree, struct ChristmasTreeParams> {
-private:
 public:
   ChristmasTree(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
   }
+
   void animate(double time) override;
 
   std::string name() const override { return "ChristmasTree"; }

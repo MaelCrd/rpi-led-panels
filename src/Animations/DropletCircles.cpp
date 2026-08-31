@@ -1,8 +1,10 @@
 #include "Animations/DropletCircles.h"
-#include "Utils.h"
+
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+
+#include "Utils.h"
 
 namespace animations {
 

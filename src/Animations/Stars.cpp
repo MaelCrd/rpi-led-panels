@@ -1,5 +1,7 @@
 #include "Animations/Stars.h"
+
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <sys/types.h>

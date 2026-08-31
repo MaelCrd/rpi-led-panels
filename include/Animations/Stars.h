@@ -1,21 +1,27 @@
 #ifndef STARS_ANIMATION_H
 #define STARS_ANIMATION_H
 
-#include "Animation.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
 
 namespace animations {
 
 struct StarsParams : ParameterSet<StarsParams> {
-  // Add color parameters for stars and shooting stars
-  PARAM_COLOR(starsColor, Color(230, 245, 255), "Stars Color")
-  PARAM_COLOR(shootingStarsColor, Color(255, 255, 255), "Shooting Stars Color")
-
   // Provide tuple of references for iteration
   auto tuple() { return std::tie(starsColor, shootingStarsColor); }
   auto tuple() const { return std::tie(starsColor, shootingStarsColor); }
+
+  // Add color parameters for stars and shooting stars
+  PARAM_COLOR(starsColor, Color(230, 245, 255), "Stars Color")
+  PARAM_COLOR(shootingStarsColor, Color(255, 255, 255), "Shooting Stars Color")
 };
 
 struct ShootingStar {
@@ -30,10 +36,6 @@ struct ShootingStar {
 };
 
 class Stars : public Animation<Stars, struct StarsParams> {
-private:
-  std::vector<ShootingStar> shooting_stars;
-  double last_time = 0;
-
 public:
   Stars(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
@@ -45,6 +47,7 @@ public:
       else
         table[i] = 0;
   }
+
   void animate(double time) override;
 
   std::string name() const override { return "Stars"; }
@@ -64,6 +67,10 @@ public:
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
   std::vector<uint8_t> table;
+
+private:
+  std::vector<ShootingStar> shooting_stars;
+  double last_time = 0;
 };
 } // namespace animations
 

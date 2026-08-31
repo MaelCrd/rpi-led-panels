@@ -1,8 +1,14 @@
 #include "Animations/Clock.h"
-#include "graphics.h"
+
 #include <chrono>
+#include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
+#include <string>
+
+#include "graphics.h"
 
 namespace animations {
 

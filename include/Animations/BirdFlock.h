@@ -1,28 +1,32 @@
 #ifndef BIRDFLOCK_ANIMATION_H
 #define BIRDFLOCK_ANIMATION_H
 
+#include <cmath>
+#include <memory>
+#include <string>
+#include <tuple>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 namespace animations {
 
 class BirdFlockImpl;
 
 struct BirdFlockParams : ParameterSet<BirdFlockParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 class BirdFlock : public Animation<BirdFlock, struct BirdFlockParams> {
-private:
-  std::unique_ptr<BirdFlockImpl> flockImpl;
-
 public:
   BirdFlock(rgb_matrix::RGBMatrix *matrix);
+  ~BirdFlock();
+
   void animate(double time) override;
 
   std::string name() const override { return "BirdFlock"; }
@@ -37,10 +41,11 @@ public:
     // No parameters to set
   }
 
-  ~BirdFlock();
-
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  std::unique_ptr<BirdFlockImpl> flockImpl;
 };
 } // namespace animations
 

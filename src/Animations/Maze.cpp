@@ -1,6 +1,5 @@
 #include "Animations/Maze.h"
-#include "Utils.h"
-#include "graphics.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -11,6 +10,10 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
+
+#include "graphics.h"
+
+#include "Utils.h"
 
 namespace animations {
 

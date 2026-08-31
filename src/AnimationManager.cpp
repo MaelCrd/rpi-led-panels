@@ -1,15 +1,21 @@
+#include "AnimationManager.h"
+
 #include <arpa/inet.h>
 #include <chrono>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <iostream>
+#include <memory>
 #include <net/if.h>
-#include <stdio.h> // For snprintf
-#include <string.h>
+#include <string>
 #include <sys/ioctl.h>
-#include <time.h>
 #include <unistd.h>
+#include <vector>
+
+#include "graphics.h"
 
 #include "Animation.h"
-#include "AnimationManager.h"
 #include "Animations/Atom.h"
 #include "Animations/BirdFlock.h"
 #include "Animations/ChristmasTree.h"
@@ -34,9 +40,7 @@
 #include "Animations/Static.h"
 #include "Animations/Test1.h"
 #include "Animations/Waves.h"
-
 #include "QRCode.h"
-#include "graphics.h"
 
 using namespace animations;
 

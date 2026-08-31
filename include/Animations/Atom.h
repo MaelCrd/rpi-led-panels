@@ -1,9 +1,11 @@
 #ifndef ATOM_ANIMATION_H
 #define ATOM_ANIMATION_H
 
+#include <cmath>
+#include <string>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 namespace animations {
 
@@ -20,12 +22,12 @@ struct AtomParams : ParameterSet<AtomParams> {
 };
 
 class Atom : public Animation<Atom, struct AtomParams> {
-private:
 public:
   Atom(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
-  };
-  void animate(double time);
+  }
+
+  void animate(double time) override;
 
   std::string name() const override { return "Atom"; }
 

@@ -1,4 +1,6 @@
 #include "Animations/Random.h"
+
+#include <cstdlib>
 #include <iostream>
 
 namespace animations {

@@ -1,9 +1,13 @@
 #include "Animations/Splash.h"
-#include "Utils.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <unistd.h>
+#include <utility>
+
+#include "Utils.h"
 
 namespace animations {
 

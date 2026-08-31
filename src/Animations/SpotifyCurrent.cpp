@@ -1,22 +1,26 @@
 #include "Animations/SpotifyCurrent.h"
-#include "stb_image.h"
+
 #include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cmath>
+#include <csignal>
 #include <cstddef>
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
-#include <signal.h>
 #include <sstream>
+#include <string>
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
+
+#include "stb_image.h"
 
 namespace animations {
 

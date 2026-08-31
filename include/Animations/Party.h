@@ -1,29 +1,34 @@
 #ifndef PARTY_ANIMATION_H
 #define PARTY_ANIMATION_H
 
-#include "Animation.h"
-#include "graphics.h"
-#include "led-matrix.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
 #include <cstdint>
+#include <string>
+#include <tuple>
+
+#include "graphics.h"
+#include "led-matrix.h"
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
 
 namespace animations {
 
 struct PartyParams : ParameterSet<PartyParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 class Party : public Animation<Party, struct PartyParams> {
-private:
 public:
   Party(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
   }
+
   void animate(double time) override;
 
   std::string name() const override { return "Party"; }

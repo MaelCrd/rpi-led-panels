@@ -1,32 +1,17 @@
+#include "Animations/HeightMap.h"
+
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
-#include "Animations/HeightMap.h"
 #include "FastNoise/Generators/Simplex.h"
-#include "Utils.h"
 
-///////////////////////////////////////////////////////////////////////
+#include "Utils.h"
 
 namespace animations {
 
 // Standalone 3D Simplex Noise implementation
 class SimplexNoise3D {
-private:
-  // Permutation table
-  static const int perm[256];
-  static const int permMod12[256];
-
-  // 3D gradient vectors
-  static const float grad3[12][3];
-
-  // Skewing and unskewing factors for 3D
-  static constexpr float F3 = 1.0f / 3.0f;
-  static constexpr float G3 = 1.0f / 6.0f;
-
-  static float dot(const float g[3], float x, float y, float z) {
-    return g[0] * x + g[1] * y + g[2] * z;
-  }
-
 public:
   static float noise(float xin, float yin, float zin) {
     float n0, n1, n2, n3; // Noise contributions from the four corners
@@ -175,6 +160,22 @@ public:
       output[i] = noise(xPos[i], yPos[i], zPos);
     }
   }
+
+private:
+  static float dot(const float g[3], float x, float y, float z) {
+    return g[0] * x + g[1] * y + g[2] * z;
+  }
+
+  // Skewing and unskewing factors for 3D
+  static constexpr float F3 = 1.0f / 3.0f;
+  static constexpr float G3 = 1.0f / 6.0f;
+
+  // Permutation table
+  static const int perm[256];
+  static const int permMod12[256];
+
+  // 3D gradient vectors
+  static const float grad3[12][3];
 };
 
 // Static member definitions

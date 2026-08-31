@@ -1,11 +1,16 @@
 #ifndef ANIMATIONMANAGER_H
 #define ANIMATIONMANAGER_H
 
+#include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <cstdint>
+#include <memory>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 #include "led-matrix.h"
 
@@ -15,24 +20,6 @@ class BaseAnimation;
 }
 
 class AnimationManager {
-private:
-  int current_animation_index;
-  std::mutex mtx_current_animation;
-  int brightness = 0;
-  int target_brightness = 100; // Target brightness for smooth transitions
-  float current_brightness =
-      100.0f; // Current brightness (for smooth interpolation)
-  mutable std::mutex mtx_brightness;
-  bool state = true;        // ON/OFF state of the animation manager
-  bool target_state = true; // Target state for smooth transitions
-  mutable std::mutex mtx_state;
-  std::vector<std::unique_ptr<animations::BaseAnimation>> animations;
-  std::vector<std::string> animationNames;
-  bool animations_initialized = false;
-
-  // Transition parameters
-  float fade_speed = 100.0f; // Brightness units per second for fade transitions
-
 public:
   AnimationManager(rgb_matrix::RGBMatrix *matrix);
   ~AnimationManager();
@@ -84,13 +71,30 @@ public:
   bool setImageDataBase64(int animationId, const std::string &base64_data,
                           int width, int height);
 
+protected:
+  rgb_matrix::RGBMatrix *matrix;
+
 private:
   // Helper methods for smooth transitions
   void updateBrightnessTransition(double deltaTime);
   bool isInTransition() const;
 
-protected:
-  rgb_matrix::RGBMatrix *matrix;
+  int current_animation_index;
+  std::mutex mtx_current_animation;
+  int brightness = 0;
+  int target_brightness = 100; // Target brightness for smooth transitions
+  float current_brightness =
+      100.0f; // Current brightness (for smooth interpolation)
+  mutable std::mutex mtx_brightness;
+  bool state = true;        // ON/OFF state of the animation manager
+  bool target_state = true; // Target state for smooth transitions
+  mutable std::mutex mtx_state;
+  std::vector<std::unique_ptr<animations::BaseAnimation>> animations;
+  std::vector<std::string> animationNames;
+  bool animations_initialized = false;
+
+  // Transition parameters
+  float fade_speed = 100.0f; // Brightness units per second for fade transitions
 };
 
 #endif // ANIMATIONMANAGER_H

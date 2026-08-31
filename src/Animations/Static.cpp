@@ -1,4 +1,5 @@
 #include "Animations/Static.h"
+
 #include <cstdlib>
 #include <unistd.h>
 

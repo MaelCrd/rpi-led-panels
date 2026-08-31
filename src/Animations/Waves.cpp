@@ -1,7 +1,14 @@
 #include "Animations/Waves.h"
-#include "graphics.h"
+
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
+#include <ctime>
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "graphics.h"
 
 namespace animations {
 

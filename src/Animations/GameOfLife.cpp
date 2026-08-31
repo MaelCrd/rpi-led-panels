@@ -1,6 +1,12 @@
-#include <Animations/GameOfLife.h>
+#include "Animations/GameOfLife.h"
+
+#include <cctype>
+#include <cstdlib>
 #include <ctime>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace animations {
 

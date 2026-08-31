@@ -1,6 +1,9 @@
 #ifndef QRCODE_H
 #define QRCODE_H
 
+#include <string>
+#include <vector>
+
 #include "qrcodegen.hpp"
 
 void inline generateQR(std::string &text, std::vector<std::vector<bool>> &qr) {

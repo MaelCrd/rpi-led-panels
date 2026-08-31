@@ -1,19 +1,18 @@
 #pragma once
 
-#include "AnimationManager.h"
+#include <memory>
+#include <string>
+
 #include "FastNoise/Base64.h"
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
 
-#include <memory>
+#include "AnimationManager.h"
 
 #include OATPP_CODEGEN_BEGIN(ApiController) ///< Begin ApiController codegen section
 
 class MainController : public oatpp::web::server::api::ApiController {
-private:
-  std::shared_ptr<AnimationManager> worker;
-
 public:
   MainController(
       OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>,
@@ -115,6 +114,9 @@ public:
                             "Invalid state value. Use '1'/'0'");
     }
   }
+
+private:
+  std::shared_ptr<AnimationManager> worker;
 };
 
 #include OATPP_CODEGEN_END(ApiController) ///< End ApiController codegen section

@@ -1,6 +1,5 @@
 #include "Animations/Atom.h"
-#include "Utils.h"
-#include "graphics.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -8,6 +7,10 @@
 #include <functional>
 #include <initializer_list>
 #include <unistd.h>
+
+#include "graphics.h"
+
+#include "Utils.h"
 
 namespace animations {
 

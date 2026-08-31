@@ -1,14 +1,17 @@
 #pragma once
-#include <algorithm> // For std::min, std::max, std::clamp
-#include <cstdio>    // For snprintf
+
+#include <algorithm>
+#include <cstdint>
+#include <cstdio>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 namespace animations {
 
@@ -19,8 +22,6 @@ enum class ParamKind { Int, Float, Color, String, Unknown };
 
 // Color structure to represent RGB values
 struct Color {
-  uint8_t r, g, b;
-
   // Default constructor (black)
   constexpr Color() : r(0), g(0), b(0) {}
 
@@ -77,6 +78,10 @@ struct Color {
         static_cast<uint8_t>(std::clamp(static_cast<int>(g * factor), 0, 255)),
         static_cast<uint8_t>(std::clamp(static_cast<int>(b * factor), 0, 255)));
   }
+
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 };
 
 template <typename T> constexpr ParamKind kindOf() {
@@ -96,12 +101,6 @@ template <typename T> constexpr ParamKind kindOf() {
 
 template <typename T> struct Param {
   using value_type = T;
-  T value;
-  T min;
-  T max;
-  std::string_view displayName;
-  std::string_view
-      internalName; // field identifier (can be same as member name)
 
   constexpr Param(T def, T mn, T mx, std::string_view display,
                   std::string_view internal)
@@ -109,16 +108,18 @@ template <typename T> struct Param {
         internalName(internal) {}
 
   constexpr ParamKind kind() const { return kindOf<T>(); }
+
+  T value;
+  T min;
+  T max;
+  std::string_view displayName;
+  std::string_view
+      internalName; // field identifier (can be same as member name)
 };
 
 // Specialization of Param for Color type (no min/max needed)
 template <> struct Param<Color> {
   using value_type = Color;
-  Color value;
-  Color min; // Not used for colors, but kept for template compatibility
-  Color max; // Not used for colors, but kept for template compatibility
-  std::string_view displayName;
-  std::string_view internalName;
 
   constexpr Param(Color def, Color mn, Color mx, std::string_view display,
                   std::string_view internal)
@@ -132,16 +133,17 @@ template <> struct Param<Color> {
         displayName(display), internalName(internal) {}
 
   constexpr ParamKind kind() const { return ParamKind::Color; }
+
+  Color value;
+  Color min; // Not used for colors, but kept for template compatibility
+  Color max; // Not used for colors, but kept for template compatibility
+  std::string_view displayName;
+  std::string_view internalName;
 };
 
 // Specialization of Param for std::string type (no min/max needed)
 template <> struct Param<std::string> {
   using value_type = std::string;
-  std::string value;
-  std::string min; // Not used for strings, but kept for template compatibility
-  std::string max; // Not used for strings, but kept for template compatibility
-  std::string_view displayName;
-  std::string_view internalName;
 
   Param(const std::string &def, const std::string &mn, const std::string &mx,
         std::string_view display, std::string_view internal)
@@ -155,6 +157,12 @@ template <> struct Param<std::string> {
         internalName(internal) {}
 
   constexpr ParamKind kind() const { return ParamKind::String; }
+
+  std::string value;
+  std::string min; // Not used for strings, but kept for template compatibility
+  std::string max; // Not used for strings, but kept for template compatibility
+  std::string_view displayName;
+  std::string_view internalName;
 };
 
 struct ParameterView {

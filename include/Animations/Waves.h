@@ -1,10 +1,14 @@
 #ifndef WAVES_ANIMATION_H
 #define WAVES_ANIMATION_H
 
-#include "Animation.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
 #include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
 
 #ifndef ASSETS_DIR
 #define ASSETS_DIR ".."
@@ -13,29 +17,18 @@
 namespace animations {
 
 struct WavesParams : ParameterSet<WavesParams> {
-  PARAM_COLOR(color, Color(255, 255, 255), "Color")
-  PARAM_FLOAT(depth, 1, 0, 10, "Depth");
-
   auto tuple() { return std::tie(color, depth); }
   auto tuple() const { return std::tie(color, depth); }
+
+  PARAM_COLOR(color, Color(255, 255, 255), "Color")
+  PARAM_FLOAT(depth, 1, 0, 10, "Depth");
 };
 
 class Waves : public Animation<Waves, struct WavesParams> {
-private:
-  std::vector<float> map;
-  std::vector<float> last_map;
-  int map_size;
-  double last_time = 0.0;
-  bool initialized = false;
-
-  void initialize();
-  void update_map(double delta_time, int width, int height);
-
 public:
   Waves(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
   }
-
   ~Waves() override = default;
 
   void animate(double time) override;
@@ -54,6 +47,16 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  void initialize();
+  void update_map(double delta_time, int width, int height);
+
+  std::vector<float> map;
+  std::vector<float> last_map;
+  int map_size;
+  double last_time = 0.0;
+  bool initialized = false;
 };
 } // namespace animations
 

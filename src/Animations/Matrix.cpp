@@ -1,11 +1,13 @@
 #include "Animations/Matrix.h"
-#include "graphics.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
+
+#include "graphics.h"
 
 namespace animations {
 

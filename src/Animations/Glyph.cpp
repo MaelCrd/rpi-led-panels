@@ -1,8 +1,14 @@
 #include "Animations/Glyphs.h"
-#include <Utils.h>
+
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
+#include <random>
+#include <string>
+#include <string_view>
 #include <unistd.h>
+
+#include "Utils.h"
 
 namespace animations {
 

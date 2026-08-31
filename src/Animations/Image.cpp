@@ -1,6 +1,13 @@
 #include "Animations/Image.h"
-#include "FastNoise/Base64.h"
+
 #include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include "FastNoise/Base64.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

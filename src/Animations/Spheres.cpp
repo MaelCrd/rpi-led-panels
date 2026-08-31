@@ -1,6 +1,5 @@
 #include "Animations/Spheres.h"
 
-#include "Utils.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -8,23 +7,15 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <string>
 #include <unistd.h>
 #include <vector>
+
+#include "Utils.h"
 
 namespace animations {
 
 class SpherePointDistribution {
-private:
-  std::vector<Point3D> points;
-  int numPoints;
-  double radius;
-
-  // Paramètres adaptatifs basés sur le nombre de points
-  double baseLearningRate; // Plus de points = taux plus faible
-  const double minDistance = 0.001;
-  double convergenceThreshold; // Seuil adaptatif
-  int iterationCount = 0;
-
 public:
   SpherePointDistribution(int n, double r = 1.0) : numPoints(n), radius(r) {
     initializeRandomPoints();
@@ -172,6 +163,17 @@ public:
     std::cout << "  Avg distance: " << avgDist << std::endl;
     std::cout << "  Uniformity ratio: " << minDist / maxDist << std::endl;
   }
+
+private:
+  std::vector<Point3D> points;
+  int numPoints;
+  double radius;
+
+  // Paramètres adaptatifs basés sur le nombre de points
+  double baseLearningRate; // Plus de points = taux plus faible
+  const double minDistance = 0.001;
+  double convergenceThreshold; // Seuil adaptatif
+  int iterationCount = 0;
 };
 
 Spheres::Spheres(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {

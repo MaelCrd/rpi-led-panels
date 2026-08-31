@@ -1,15 +1,19 @@
 #include "Animations/BirdFlock.h"
-#include "Utils.h"
-#include "graphics.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <ctime>
 #include <functional>
 #include <initializer_list>
 #include <random>
 #include <unistd.h>
 #include <vector>
+
+#include "graphics.h"
+
+#include "Utils.h"
 
 namespace animations {
 
@@ -43,25 +47,6 @@ struct Bird {
 
 class BirdFlockImpl {
 public:
-  std::vector<Bird> birds;
-  int width, height;
-  double lastTime;
-
-  // Flocking parameters - adjusted for smaller flocks
-  float separationRadius = 6.5f; // Reduced from 8.0f
-  float alignmentRadius = 9.0f;  // Reduced from 15.0f
-  float cohesionRadius = 15.0f;  // Reduced from 20.0f
-  float maxSpeed = 2.0f;
-  float maxForce = 0.1f;
-
-  float speedMultiplier = 0.8f;
-
-  // Wind parameters
-  float windX = 0.0f, windY = 0.0f;
-  double lastWindChange = 0.0;
-  float windChangeInterval = 1.5f; // Change wind every X seconds
-  float windStrength = 0.021f;
-
   BirdFlockImpl(int w, int h) : width(w), height(h), lastTime(0.0) {
     // Initialize random number generator
     srand(time(nullptr));
@@ -318,6 +303,25 @@ public:
       }
     }
   }
+
+  std::vector<Bird> birds;
+  int width, height;
+  double lastTime;
+
+  // Flocking parameters - adjusted for smaller flocks
+  float separationRadius = 6.5f; // Reduced from 8.0f
+  float alignmentRadius = 9.0f;  // Reduced from 15.0f
+  float cohesionRadius = 15.0f;  // Reduced from 20.0f
+  float maxSpeed = 2.0f;
+  float maxForce = 0.1f;
+
+  float speedMultiplier = 0.8f;
+
+  // Wind parameters
+  float windX = 0.0f, windY = 0.0f;
+  double lastWindChange = 0.0;
+  float windChangeInterval = 1.5f; // Change wind every X seconds
+  float windStrength = 0.021f;
 };
 
 BirdFlock::BirdFlock(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {

@@ -1,4 +1,7 @@
 #include "Animations/FlowTubes.h"
+
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <random>
 #include <unistd.h>

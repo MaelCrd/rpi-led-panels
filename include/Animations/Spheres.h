@@ -1,9 +1,14 @@
 #ifndef SPHERES_ANIMATION_H
 #define SPHERES_ANIMATION_H
 
+#include <cmath>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 #ifndef ASSETS_DIR
 #define ASSETS_DIR ".."
@@ -12,15 +17,15 @@
 namespace animations {
 
 struct SpheresParams : ParameterSet<SpheresParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 struct Point3D {
-  double x, y, z;
   Point3D(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
 
   Point3D operator+(const Point3D &other) const {
@@ -37,25 +42,13 @@ struct Point3D {
     double len = length();
     return len > 0 ? Point3D(x / len, y / len, z / len) : Point3D();
   }
+
+  double x, y, z;
 };
 
 class SpherePointDistribution;
 
 class Spheres : public Animation<Spheres, struct SpheresParams> {
-private:
-  std::vector<Point3D> spherePoints1;
-  std::vector<Point3D> rotatedPoints1;
-  std::unique_ptr<SpherePointDistribution> distribution1;
-
-  std::vector<Point3D> spherePoints2;
-  std::vector<Point3D> rotatedPoints2;
-  std::unique_ptr<SpherePointDistribution> distribution2;
-
-  float speed = 60.0f;
-  bool initialized = false;
-
-  void initialize();
-
 public:
   Spheres(rgb_matrix::RGBMatrix *matrix);
   ~Spheres();
@@ -76,6 +69,20 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  void initialize();
+
+  std::vector<Point3D> spherePoints1;
+  std::vector<Point3D> rotatedPoints1;
+  std::unique_ptr<SpherePointDistribution> distribution1;
+
+  std::vector<Point3D> spherePoints2;
+  std::vector<Point3D> rotatedPoints2;
+  std::unique_ptr<SpherePointDistribution> distribution2;
+
+  float speed = 60.0f;
+  bool initialized = false;
 };
 } // namespace animations
 

@@ -1,19 +1,22 @@
+#include <atomic>
+#include <cmath>
+#include <csignal>
+#include <cstdio>
+#include <ctime>
+#include <functional>
 #include <iostream>
-#include <math.h>
 #include <memory>
-#include <oatpp/web/server/HttpRouter.hpp>
-#include <signal.h>
-#include <stdio.h>
 #include <thread>
-#include <time.h>
 #include <unistd.h>
+
+#include "graphics.h"
+#include "led-matrix.h"
+#include "oatpp/network/Server.hpp"
+#include "oatpp/web/server/HttpRouter.hpp"
 
 #include "AnimationManager.h"
 #include "AppComponent.hpp"
 #include "controller/MainController.hpp"
-#include "graphics.h"
-#include "led-matrix.h"
-#include "oatpp/network/Server.hpp"
 
 using rgb_matrix::RGBMatrix;
 

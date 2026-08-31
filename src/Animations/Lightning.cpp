@@ -1,5 +1,11 @@
 #include "Animations/Lightning.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <utility>
+#include <vector>
 
 namespace animations {
 

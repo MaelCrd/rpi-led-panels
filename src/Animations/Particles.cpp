@@ -1,5 +1,7 @@
 #include "Animations/Particles.h"
+
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <unistd.h>
 
@@ -99,7 +101,7 @@ void Particles::animate(double time) {
 
       // Add sine wave oscillation perpendicular to the velocity vector
       float angle = std::atan2(p.vy, p.vx);
-      float sine_amplitude = 0.3f; // Amplitude of the sine wave
+      float sine_amplitude = 0.2f; // Amplitude of the sine wave
       float sine_frequency = 2.9f; // Frequency of the sine wave
       p.vx += sine_amplitude *
               std::sin(sine_frequency * time + p.random_factor * M_PI * 2.0f) *

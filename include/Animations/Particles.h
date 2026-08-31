@@ -1,9 +1,13 @@
 #ifndef PARTICLES_ANIMATION_H
 #define PARTICLES_ANIMATION_H
 
+#include <cmath>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "Animation.h"
 #include "parameters/param_system.hpp"
-#include <cmath>
 
 namespace animations {
 
@@ -17,13 +21,6 @@ struct Particle {
 };
 
 struct ParticlesParams : ParameterSet<ParticlesParams> {
-  // Empty tuple for animations with no parameters
-  PARAM_COLOR(color, Color(255, 255, 255), "Color")
-  PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
-  PARAM_INT(numParticles, 500, 1, 1000, "Number of particles")
-  PARAM_INT(movementType, 2, 0, 3,
-            "Movement type (0: random, 1: circular, 2: sine wave, 3: erratic)")
-
   // Provide tuple of references for iteration
   auto tuple() {
     return std::tie(color, fadeSpeed, numParticles, movementType);
@@ -31,21 +28,23 @@ struct ParticlesParams : ParameterSet<ParticlesParams> {
   auto const tuple() const {
     return std::tie(color, fadeSpeed, numParticles, movementType);
   }
+
+  PARAM_COLOR(color, Color(255, 255, 255), "Color")
+  PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
+  PARAM_INT(numParticles, 500, 1, 1000, "Number of particles")
+  PARAM_INT(movementType, 2, 0, 3,
+            "Movement type (0: random, 1: circular, 2: sine wave, 3: erratic)")
 };
 
 class Particles : public Animation<Particles, struct ParticlesParams> {
-private:
-  std::vector<Particle> particles;
-  double last_time = 0;
-  std::vector<std::vector<Color>> grid;
-
 public:
   Particles(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
     // Initialize grid with the size of the matrix
     grid.resize(offscreen_canvas->height(),
                 std::vector<Color>(offscreen_canvas->width(), Color(0, 0, 0)));
-  };
+  }
+
   void animate(double time) override;
 
   std::string name() const override { return "Particles"; }
@@ -68,6 +67,11 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  std::vector<Particle> particles;
+  double last_time = 0;
+  std::vector<std::vector<Color>> grid;
 };
 } // namespace animations
 

@@ -1,25 +1,59 @@
 #ifndef MAZE_ANIMATION_H
 #define MAZE_ANIMATION_H
 
-#include "Animation.h"
-#include "parameters/param_system.hpp"
 #include <cmath>
+#include <cstdint>
 #include <random>
+#include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
+
+#include "Animation.h"
+#include "parameters/param_system.hpp"
 
 namespace animations {
 
 struct MazeParams : ParameterSet<MazeParams> {
-  // Empty tuple for animations with no parameters
-  std::tuple<> empty_tuple;
   // Provide tuple of references for iteration
   auto &tuple() { return empty_tuple; }
   auto const &tuple() const { return empty_tuple; }
+
+  // Empty tuple for animations with no parameters
+  std::tuple<> empty_tuple;
 };
 
 class Maze : public Animation<Maze, struct MazeParams> {
+public:
+  Maze(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
+    offscreen_canvas = matrix->CreateFrameCanvas();
+  }
+
+  void animate(double time) override;
+
+  std::string name() const override { return "Maze"; }
+
+  // Override mode parameter methods - Maze has no parameters so all modes are
+  // the same
+  void applyDefaultParameters() override {
+    // No parameters to set
+  }
+
+  void applyPresetParameters() override {
+    // No parameters to set
+  }
+
+protected:
+  rgb_matrix::FrameCanvas *offscreen_canvas;
+
 private:
+  // Helpers
+  inline int idx_(int x, int y) const { return y * w_ + x; }
+  void init_();
+  void addFrontierWalls_(int cx, int cy);
+  void step_();
+  void draw_();
+
   // Dimensions of the grid (use the canvas size)
   int w_{0}, h_{0};
 
@@ -37,34 +71,6 @@ private:
 
   // Animation pacing
   int steps_per_frame_{8}; // adjust to taste
-
-  // Helpers
-  inline int idx_(int x, int y) const { return y * w_ + x; }
-  void init_();
-  void addFrontierWalls_(int cx, int cy);
-  void step_();
-  void draw_();
-
-public:
-  Maze(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
-    offscreen_canvas = matrix->CreateFrameCanvas();
-  };
-  void animate(double time) override;
-
-  std::string name() const override { return "Maze"; }
-
-  // Override mode parameter methods - Maze has no parameters so all modes are
-  // the same
-  void applyDefaultParameters() override {
-    // No parameters to set
-  }
-
-  void applyPresetParameters() override {
-    // No parameters to set
-  }
-
-protected:
-  rgb_matrix::FrameCanvas *offscreen_canvas;
 };
 } // namespace animations
 

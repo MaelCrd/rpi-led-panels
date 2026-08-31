@@ -5,6 +5,7 @@
 #include <random>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "Animation.h"
 #include "parameters/param_system.hpp"
@@ -36,13 +37,6 @@ struct GlyphChar {
 };
 
 struct GlyphsParams : ParameterSet<GlyphsParams> {
-  // Parameter definitions for the Glyphs animation
-  PARAM_COLOR(color, Color(255, 0, 0), "Color")
-  PARAM_COLOR(stableColor, Color(255, 255, 255), "Stable color")
-  PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
-  PARAM_FLOAT(spawnChance, 1.0f, 0.01, 3, "Spawn chance")
-  PARAM_FLOAT(jitterChance, 1.0f, 0.0, 5, "Jitter chance")
-
   // Provide tuple of references for iteration
   auto tuple() {
     return std::tie(color, stableColor, fadeSpeed, spawnChance, jitterChance);
@@ -50,15 +44,16 @@ struct GlyphsParams : ParameterSet<GlyphsParams> {
   auto const tuple() const {
     return std::tie(color, stableColor, fadeSpeed, spawnChance, jitterChance);
   }
+
+  // Parameter definitions for the Glyphs animation
+  PARAM_COLOR(color, Color(255, 0, 0), "Color")
+  PARAM_COLOR(stableColor, Color(255, 255, 255), "Stable color")
+  PARAM_FLOAT(fadeSpeed, 1.0f, 0.1, 3, "Fade speed")
+  PARAM_FLOAT(spawnChance, 1.0f, 0.01, 3, "Spawn chance")
+  PARAM_FLOAT(jitterChance, 1.0f, 0.0, 5, "Jitter chance")
 };
 
 class Glyphs : public Animation<Glyphs, struct GlyphsParams> {
-private:
-  rgb_matrix::Font font;
-  std::vector<std::vector<GlyphChar>> grid;
-
-  double last_time = 0;
-
 public:
   Glyphs(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
     offscreen_canvas = matrix->CreateFrameCanvas();
@@ -70,7 +65,8 @@ public:
         grid[i][j] = GlyphChar{getRandomSCChar(), params_.color.value};
       }
     }
-  };
+  }
+
   void animate(double time) override;
 
   std::string name() const override { return "Glyphs"; }
@@ -95,6 +91,11 @@ public:
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
+
+private:
+  rgb_matrix::Font font;
+  std::vector<std::vector<GlyphChar>> grid;
+  double last_time = 0;
 };
 } // namespace animations
 
