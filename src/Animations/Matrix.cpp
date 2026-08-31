@@ -15,12 +15,12 @@ void Matrix::animate(double time) {
   double delta_time = time - last_time;
   last_time = time;
 
-  int center_x = offscreen_canvas->width() / 2;
-  int center_y = offscreen_canvas->height() / 2;
+  // int center_x = offscreen_canvas->width() / 2;
+  // int center_y = offscreen_canvas->height() / 2;
 
   offscreen_canvas->Clear();
 
-  uint8_t r = 0, g = 255, b = 0;
+  uint8_t g = 255;
 
   int trail_length = 60;
 

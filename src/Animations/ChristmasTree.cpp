@@ -187,7 +187,6 @@ void ChristmasTree::animate(double time) {
 
   // Precompute display widths/heights and centering offsets for each image
   // so we don't recompute inside the per-pixel loop.
-  const double EPS_TIME = 1e-6;
   std::vector<int> display_widths(num_images), display_heights(num_images);
   std::vector<int> offset_xs(num_images), offset_ys(num_images);
   for (int i = 0; i < num_images; ++i) {

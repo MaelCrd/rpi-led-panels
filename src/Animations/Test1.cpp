@@ -20,7 +20,7 @@ void Test1::animate(double time) {
   int center_x = offscreen_canvas->width() / 2;
   int center_y = offscreen_canvas->height() / 2;
 
-  auto c = rgb_matrix::Color(255, 0, 255);
+  // auto c = rgb_matrix::Color(255, 0, 255);
   uint8_t r, g, b;
 
   offscreen_canvas->Clear();

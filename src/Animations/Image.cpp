@@ -24,7 +24,7 @@ Image::Image(rgb_matrix::RGBMatrix *matrix)
   offscreen_canvas = matrix->CreateFrameCanvas();
 }
 
-void Image::animate(double time) {
+void Image::animate(double /*time*/) {
   std::lock_guard<std::mutex> lock(image_mutex);
 
   // Refresh cache if needed

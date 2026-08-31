@@ -12,8 +12,7 @@ Random::Random(rgb_matrix::RGBMatrix *matrix) : Animation(matrix) {
   // randomColorSpeed = 1.0f;
 }
 
-void Random::animate(double time) {
-
+void Random::animate(double /*time*/) {
   // Generate random pixel values
   for (int x = 0; x < matrix->width(); ++x) {
     for (int y = 0; y < matrix->height(); ++y) {

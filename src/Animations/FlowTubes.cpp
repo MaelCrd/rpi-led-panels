@@ -29,12 +29,12 @@ void FlowTubes::animate(double time) {
     // Initialize evolution values
     int steps = 128;
     std::vector<double> evolution_steps(steps);
-    for (int x = 0; x < evolution_steps.capacity(); ++x) {
+    for (size_t x = 0; x < evolution_steps.capacity(); ++x) {
       evolution_steps[x] = dis(gen);
     }
     // Evolution values are a smoothed version of the random steps
     evolution_values.resize(steps * 4);
-    for (int x = 0; x < evolution_values.capacity(); ++x) {
+    for (size_t x = 0; x < evolution_values.capacity(); ++x) {
       double mu = static_cast<double>(x) / (evolution_values.capacity() - 1);
       int keyframe_index = static_cast<int>(mu * (steps - 1));
       double local_mu = (mu * (steps - 1)) - keyframe_index;
@@ -47,19 +47,9 @@ void FlowTubes::animate(double time) {
     }
   }
 
-  // // Display evolution_steps values for debugging
-  // for (int i = 0; i < evolution_values.size(); ++i) {
-  //   if (i % 10 == 0) {
-  //     std::cout << "\n";
-  //   }
-  //   std::cout << evolution_values[i] << " ";
-  // }
-  // std::cout << "\n";
-
-  // usleep(1000000 * 90);
-
   int w_count = 8;
-  if (high.size() != w_count || low.size() != w_count) {
+  if (static_cast<int>(high.size()) != w_count ||
+      static_cast<int>(low.size()) != w_count) {
     high.resize(w_count);
     low.resize(w_count);
 

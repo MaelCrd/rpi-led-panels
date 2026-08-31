@@ -22,7 +22,7 @@ using rgb_matrix::RGBMatrix;
 
 std::atomic<int> interrupt_received(0);
 
-static void InterruptHandler(int signo) { interrupt_received = 1; }
+static void InterruptHandler(int /*signo*/) { interrupt_received = 1; }
 
 void runServer(std::shared_ptr<AnimationManager> animManager) {
   /* Register Components in scope of run() method */

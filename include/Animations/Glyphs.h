@@ -59,9 +59,9 @@ public:
     offscreen_canvas = matrix->CreateFrameCanvas();
     font.LoadFont(ASSETS_DIR "/fonts/NotoSansSC-10.bdf"); // 11 lines, 25 cols
     grid.resize(11);
-    for (int i = 0; i < grid.size(); ++i) {
+    for (size_t i = 0; i < grid.size(); ++i) {
       grid[i].resize(25);
-      for (int j = 0; j < grid[i].size(); ++j) {
+      for (size_t j = 0; j < grid[i].size(); ++j) {
         grid[i][j] = GlyphChar{getRandomSCChar(), params_.color.value};
       }
     }

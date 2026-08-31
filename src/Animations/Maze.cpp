@@ -160,13 +160,13 @@ void Maze::draw_() {
     for (int x = 0; x < w_; ++x) {
       bool is_path = grid_[idx_(x, y)] == 1;
       if (is_path) {
-        offscreen_canvas->SetPixel(2 * x + 1, 2 * y + 1, path_g, path_g,
+        offscreen_canvas->SetPixel(2 * x + 1, 2 * y + 1, path_r, path_g,
                                    path_b);
-        offscreen_canvas->SetPixel(2 * x + 2, 2 * y + 1, path_g, path_g,
+        offscreen_canvas->SetPixel(2 * x + 2, 2 * y + 1, path_r, path_g,
                                    path_b);
-        offscreen_canvas->SetPixel(2 * x + 1, 2 * y + 2, path_g, path_g,
+        offscreen_canvas->SetPixel(2 * x + 1, 2 * y + 2, path_r, path_g,
                                    path_b);
-        offscreen_canvas->SetPixel(2 * x + 2, 2 * y + 2, path_g, path_g,
+        offscreen_canvas->SetPixel(2 * x + 2, 2 * y + 2, path_r, path_g,
                                    path_b);
       } else {
         offscreen_canvas->SetPixel(2 * x + 1, 2 * y + 1, wall_r, wall_g,
@@ -213,7 +213,7 @@ void Maze::draw_() {
   }
 }
 
-void Maze::animate(double time) {
+void Maze::animate(double /*time*/) {
   if (!initialized_)
     init_();
 

@@ -12,8 +12,7 @@
 
 namespace animations {
 
-void Clock::animate(double _) {
-  // Get current time
+void Clock::animate(double /*time*/) {
   time_t now = time(nullptr);
 
   struct tm result;
@@ -22,19 +21,14 @@ void Clock::animate(double _) {
   int hours = local_time->tm_hour;
   int minutes = local_time->tm_min;
   int seconds = local_time->tm_sec;
-  int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
-                         std::chrono::system_clock::now().time_since_epoch())
-                         .count() %
-                     1000;
 
   // std::cout << "Current time: " << hours << ":" << minutes << ":" << seconds
-  //           << "." << milliseconds << std::endl;
+  //           << std::endl;
 
   offscreen_canvas->Clear();
 
   int center_x = offscreen_canvas->width() / 4 * 3;
   int center_y = offscreen_canvas->height() / 4 * 3;
-
   // Draw the time as HH:MM:SS
   char text[9];
   std::snprintf(text, sizeof(text), "%02d:%02d:%02d", hours, minutes, seconds);

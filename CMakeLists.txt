@@ -49,6 +49,9 @@ set(OATPP_LINK_TEST_LIBRARY OFF CACHE BOOL "Link oatpp test library" FORCE)
 set(OATPP_INSTALL OFF CACHE BOOL "Install oatpp" FORCE)
 # Add the oatpp submodule directory
 add_subdirectory(deps/oatpp)
+if(TARGET oatpp)
+    target_compile_options(oatpp PRIVATE -Wno-suggest-attribute=noreturn)
+endif()
 # Create an alias target so existing references to oatpp::oatpp continue to work
 if(NOT TARGET oatpp::oatpp)
     add_library(oatpp::oatpp ALIAS oatpp)
@@ -99,6 +102,7 @@ add_library(stb_image INTERFACE)
 target_include_directories(stb_image INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 add_executable(rpi-led-panels ${SOURCES})
+target_compile_options(rpi-led-panels PRIVATE -Wall -Wextra)
 
 # Add dependency to ensure library is built first
 add_dependencies(rpi-led-panels rgbmatrix_lib)
@@ -118,6 +122,8 @@ target_link_libraries(rpi-led-panels PRIVATE
 
 target_include_directories(rpi-led-panels PRIVATE 
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+target_include_directories(rpi-led-panels SYSTEM PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/deps"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/matrix/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/qrcodegen"

@@ -857,7 +857,7 @@ std::vector<std::string> SpotifyCurrent::wrap_text(const std::string &text,
       // The word doesn't fit, start a new line
       if (!current_line.empty()) {
         lines.push_back(current_line);
-        if (lines.size() >= max_lines) {
+        if (lines.size() >= static_cast<size_t>(max_lines)) {
           text_truncated = true;
           break;
         }
@@ -884,7 +884,7 @@ std::vector<std::string> SpotifyCurrent::wrap_text(const std::string &text,
           accumulated_width += char_width;
         }
         lines.push_back(current_line);
-        if (lines.size() >= max_lines) {
+        if (lines.size() >= static_cast<size_t>(max_lines)) {
           text_truncated = true;
           break;
         }
@@ -894,9 +894,10 @@ std::vector<std::string> SpotifyCurrent::wrap_text(const std::string &text,
   }
 
   // Add the last line if it's not empty
-  if (!current_line.empty() && lines.size() < max_lines) {
+  if (!current_line.empty() && lines.size() < static_cast<size_t>(max_lines)) {
     lines.push_back(current_line);
-  } else if (!current_line.empty() && lines.size() >= max_lines) {
+  } else if (!current_line.empty() &&
+             lines.size() >= static_cast<size_t>(max_lines)) {
     text_truncated = true;
   }
 
@@ -1036,14 +1037,14 @@ void SpotifyCurrent::animate(double time) {
     }
 
     // Cover is 64x64 at position (12, 12), so it spans from y=12 to y=76
-    const int cover_x = 12;
-    const int cover_y = 12;
-    const int cover_size = 64;
-    const int cover_center_y = cover_y + cover_size / 2; // y = 44
+    // const int cover_x = 12;
+    // const int cover_y = 12;
+    // const int cover_size = 64;
+    // const int cover_center_y = cover_y + cover_size / 2; // y = 44
 
-    const int text_x = cover_x + cover_size + 10; // x = 86
-    const int max_text_width =
-        matrix->width() - text_x - 5; // Leave 5px margin on the right
+    // const int text_x = cover_x + cover_size + 10; // x = 86
+    // const int max_text_width =
+    //     matrix->width() - text_x - 5; // Leave 5px margin on the right
 
     if (prev_track_data.id != new_track.id && !is_fading) {
 
@@ -1077,7 +1078,7 @@ void SpotifyCurrent::animate(double time) {
 
   // Show progress bar and update it
   int bar_y = matrix->height() - 1 - 1; // 1px from bottom
-  int bar_height = 1;
+  // int bar_height = 1;
   int bar_width = matrix->width();
   if (pending_track_data.duration_ms > 0) {
     float progress_ratio = static_cast<float>(pending_track_data.progress_ms) /

@@ -109,10 +109,10 @@ void Stars::animate(double time) {
       for (int dx = -size; dx <= size; ++dx) {
         for (int dy = -size; dy <= size; ++dy) {
           if (dx * dx + dy * dy <= size * size) {
-            float distance = sqrt(dx * dx + dy * dy);
-            // int brightness =
-            //     static_cast<int>(255 * (1 - distance * 0.8 / size));
-            // brightness = std::clamp(brightness, 0, 255);
+            // float distance = sqrt(dx * dx + dy * dy);
+            // // int brightness =
+            // //     static_cast<int>(255 * (1 - distance * 0.8 / size));
+            // // brightness = std::clamp(brightness, 0, 255);
             int px = x + dx;
             int py = y + dy;
             if (px >= 0 && px < matrix->width() && py >= 0 &&

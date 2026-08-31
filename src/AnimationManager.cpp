@@ -45,7 +45,7 @@
 using namespace animations;
 
 AnimationManager::AnimationManager(rgb_matrix::RGBMatrix *matrix)
-    : current_animation_index(-1), matrix(matrix), target_brightness(100),
+    : matrix(matrix), current_animation_index(-1), target_brightness(100),
       current_brightness(100.0f), target_state(true) {
   initAnimations();
 }
@@ -147,7 +147,7 @@ void AnimationManager::run(std::atomic<int> *interrupt_received) {
     generateQR(text, qr);
 
     // Display the QR code on the LED matrix
-    int qr_size = qr.size();
+    int qr_size = static_cast<int>(qr.size());
     int module_size = 3;    // Size of each QR code module in pixels
     qr_size *= module_size; // Scale the QR code size
     int offset_x = (matrix->width() - qr_size) / 2;
@@ -156,7 +156,8 @@ void AnimationManager::run(std::atomic<int> *interrupt_received) {
       for (int x = 0; x < qr_size; ++x) {
         int qr_x = x / module_size;
         int qr_y = y / module_size;
-        if (qr_x < qr.size() && qr_y < qr.size() && qr[qr_y][qr_x]) {
+        if (static_cast<size_t>(qr_x) < qr.size() &&
+            static_cast<size_t>(qr_y) < qr.size() && qr[qr_y][qr_x]) {
           matrix->SetPixel(x + offset_x, y + offset_y, 255, 255, 255); // White
         } else {
           matrix->SetPixel(x + offset_x, y + offset_y, 0, 0, 0); // Black
@@ -183,7 +184,6 @@ void AnimationManager::run(std::atomic<int> *interrupt_received) {
   float animation_fade_duration = 1.0; // seconds for animation transitions
 
   auto start = std::chrono::system_clock::now();
-  int frame_count = 0;
   double time = 0;
   auto last = start;
 

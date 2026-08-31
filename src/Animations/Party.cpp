@@ -6,7 +6,7 @@
 
 namespace animations {
 
-void Party::animate(double time) {
+void Party::animate(double /*time*/) {
   // int index = static_cast<int>(time * 20) % 7; // Change color every 0.5
   // seconds
   index = (index + 1) % 2;

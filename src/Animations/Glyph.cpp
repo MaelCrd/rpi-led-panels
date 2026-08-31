@@ -134,8 +134,8 @@ void Glyphs::animate(double time) {
   int spacing = 3; // Border spacing from the edges of the matrix
 
   // Change some characters in the grid to random Chinese characters
-  for (int i = 0; i < grid.size(); ++i) {
-    for (int j = 0; j < grid[i].size(); ++j) {
+  for (size_t i = 0; i < grid.size(); ++i) {
+    for (size_t j = 0; j < grid[i].size(); ++j) {
       //   float chance = sin(time * 1.0 + ((i + j) * 0.05));
       // float chance = 0;
       // if (chance * delta_time > 0.5) {
@@ -220,10 +220,10 @@ void Glyphs::animate(double time) {
   }
 
   int font_height = font.height() - 10;
-  int text_height = 0;
-  for (int line = 0; line < 11; ++line) {
-    auto color = params_.color.value;
-    for (int j = 0; j < grid[line].size(); ++j) {
+  // int text_height = 0;
+  for (size_t line = 0; line < 11; ++line) {
+    // auto color = params_.color.value;
+    for (size_t j = 0; j < grid[line].size(); ++j) {
       rgb_matrix::DrawText(offscreen_canvas, font, spacing + j * 10,
                            (spacing + font_height) * (line + 1) + 1,
                            rgb_matrix::Color(grid[line][j].color.r,
