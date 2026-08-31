@@ -5,7 +5,7 @@ STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cpp
 
 if [ -n "$STAGED_FILES" ]; then
   for FILE in $STAGED_FILES; do
-    clang-format -i "$FILE"
+    clang-format-19 -i "$FILE"
     git add "$FILE"
   done
 fi

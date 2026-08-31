@@ -1,14 +1,37 @@
 #pragma once
 
+#include <atomic>
+#include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 
-#include "FastNoise/Base64.h"
+#include "oatpp/data/stream/Stream.hpp"
 #include "oatpp/macro/codegen.hpp"
 #include "oatpp/macro/component.hpp"
+#include "oatpp/web/protocol/http/outgoing/StreamingBody.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
 
 #include "AnimationManager.h"
+
+extern std::atomic<int> interrupt_received;
+
+class SseHeartbeatCallback : public oatpp::data::stream::ReadCallback {
+public:
+  oatpp::v_io_size read(void *buffer, v_buff_size count,
+                        oatpp::async::Action &) override {
+    for (int i = 0; i < 300; ++i) {
+      if (interrupt_received)
+        return 0;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    if (count >= 3) {
+      std::memcpy(buffer, ":\n\n", 3);
+      return 3;
+    }
+    return 0;
+  }
+};
 
 #include OATPP_CODEGEN_BEGIN(ApiController) ///< Begin ApiController codegen section
 
@@ -113,6 +136,18 @@ public:
       return createResponse(Status::CODE_400,
                             "Invalid state value. Use '1'/'0'");
     }
+  }
+
+  ADD_CORS(sseHeartbeat)
+  ENDPOINT("GET", "/sse", sseHeartbeat) {
+    auto body =
+        std::make_shared<oatpp::web::protocol::http::outgoing::StreamingBody>(
+            std::make_shared<SseHeartbeatCallback>());
+    auto response = OutgoingResponse::createShared(Status::CODE_200, body);
+    response->putHeader("Content-Type", "text/event-stream");
+    response->putHeader("Cache-Control", "no-cache");
+    response->putHeader("Connection", "keep-alive");
+    return response;
   }
 
 private:
