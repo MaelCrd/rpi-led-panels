@@ -16,9 +16,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Ninja
+      - name: Install dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y ninja-build
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential libcurl4-openssl-dev
 
       - name: Configure CMake
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
