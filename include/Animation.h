@@ -132,14 +132,7 @@ public:
   }
 
   // Default implementations - derived classes should override these
-  void applyDefaultParameters() override {
-    // Default implementation: parameters are already initialized by their
-    // respective PARAM_* macros (e.g., PARAM_COLOR, PARAM_INT, PARAM_FLOAT)
-    // with the correct default values during member initialization.
-    // We don't need to do anything here - the derived class should override
-    // this method if it wants to set specific default parameter values.
-    // Doing nothing preserves the values set by the PARAM_* macro constructors.
-  }
+  void applyDefaultParameters() override {}
 
   void applyPresetParameters() override {
     // Default implementation: same as default parameters

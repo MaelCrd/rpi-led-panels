@@ -53,14 +53,14 @@ void FlowTubes::animate(double time) {
     high.resize(w_count);
     low.resize(w_count);
 
-    // 1. Generate random keyframes
+    // Generate random keyframes
     for (int i = 0; i < w_count; ++i) {
       high[i] = dis(gen);
       low[i] = dis(gen);
     }
   }
 
-  // 1. Change slightly over time to create a flowing effect
+  // Change slightly over time to create a flowing effect
   for (int i = 0; i < w_count; ++i) {
     high[i] += evolution_values[(static_cast<int>(time * 10) + i * 10) %
                                 evolution_values.size()] *
@@ -72,7 +72,7 @@ void FlowTubes::animate(double time) {
     low[i] = std::clamp(low[i], 0.0, 1.0);
   }
 
-  // 2. Interpolate between keyframes
+  // Interpolate between keyframes
   int steps = offscreen_canvas->width();
   for (int x = 0; x < steps; ++x) {
     double mu = static_cast<double>(x) / (steps - 1);
@@ -84,7 +84,7 @@ void FlowTubes::animate(double time) {
     double interpolated_value_low =
         cosine_interpolate(low[keyframe_index], low[next_index], local_mu);
 
-    // 3. Draw the interpolated values on the canvas
+    // Draw the interpolated values on the canvas
     int y_high =
         static_cast<int>(interpolated_value * offscreen_canvas->height() / 2 +
                          offscreen_canvas->height() / 2);

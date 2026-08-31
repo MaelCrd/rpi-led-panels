@@ -90,8 +90,7 @@ public:
 
   std::string name() const override { return "SpotifyCurrent"; }
 
-  // Override mode parameter methods - Static has no parameters so all modes are
-  // the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     params_.cover_fade_duration.value = 1.3f;
     params_.title_color.value = Color(255, 255, 255);

@@ -49,8 +49,7 @@ public:
 
   std::string name() const override { return "Particles"; }
 
-  // Override mode parameter methods - Static has no parameters so all modes are
-  // the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     params_.color.value = Color(255, 255, 255);
     params_.fadeSpeed.value = 1.0f;
