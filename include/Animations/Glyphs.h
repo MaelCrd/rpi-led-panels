@@ -71,8 +71,7 @@ public:
 
   std::string name() const override { return "Glyphs"; }
 
-  // Override mode parameter methods - Glyphs has no parameters so all modes are
-  // the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     params_.color.value = Color(255, 0, 0);
     params_.stableColor.value = Color(255, 255, 255);
@@ -82,8 +81,8 @@ public:
   }
 
   void applyPresetParameters() override {
-    params_.color.value = Color(255, 47, 0);
-    params_.stableColor.value = Color(5, 5, 5);
+    params_.color.value = Color(255, 20, 0);
+    params_.stableColor.value = Color(3, 3, 3);
     params_.fadeSpeed.value = 0.48f;
     params_.spawnChance.value = 0.46f;
     params_.jitterChance.value = 1.09f;

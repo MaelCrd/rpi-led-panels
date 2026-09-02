@@ -36,8 +36,7 @@ public:
 
   std::string name() const override { return "ChristmasTree"; }
 
-  // Override mode parameter methods - Party has no parameters so all modes are
-  // the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     // No parameters to set
     params_.hold_seconds.value = 0.0f;

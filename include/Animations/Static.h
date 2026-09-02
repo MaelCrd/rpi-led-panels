@@ -28,8 +28,7 @@ public:
 
   std::string name() const override { return "Static"; }
 
-  // Override mode parameter methods - Static has no parameters so all modes are
-  // the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     params_.color.value = Color(255, 255, 255);
   }

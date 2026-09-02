@@ -57,8 +57,7 @@ public:
 
   std::string name() const override { return "Spheres"; }
 
-  // Override mode parameter methods - Spheres has no parameters so all modes
-  // are the same
+  // Override mode parameter methods
   void applyDefaultParameters() override {
     // No parameters to set
   }
