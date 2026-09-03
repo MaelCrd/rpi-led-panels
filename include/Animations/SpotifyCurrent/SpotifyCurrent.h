@@ -3,16 +3,16 @@
 
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "Animation.h"
 #include "Utils.h"
 #include "parameters/param_system.hpp"
 
-#include "Animations/SpotifyCurrent/SpotifyTrackData.h"
 #include "Animations/SpotifyCurrent/SpotifyFetcher.h"
+#include "Animations/SpotifyCurrent/SpotifyTrackData.h"
 
 #ifndef ASSETS_DIR
 #define ASSETS_DIR ".."
@@ -51,12 +51,10 @@ public:
                    "SPOTIFY_REFRESH_TOKEN not set in environment.\n";
       return;
     }
-    
+
     fetcher_ = std::make_unique<SpotifyFetcher>(
-      std::getenv("SPOTIFY_CLIENT_ID"),
-      std::getenv("SPOTIFY_CLIENT_SECRET"),
-      std::getenv("SPOTIFY_REFRESH_TOKEN")
-    );
+        std::getenv("SPOTIFY_CLIENT_ID"), std::getenv("SPOTIFY_CLIENT_SECRET"),
+        std::getenv("SPOTIFY_REFRESH_TOKEN"));
   }
 
   ~SpotifyCurrent() = default;
@@ -94,7 +92,7 @@ protected:
 
 private:
   std::unique_ptr<SpotifyFetcher> fetcher_;
-  
+
   TrackData prev_track_data{};
   TrackData pending_track_data;
 
@@ -105,7 +103,7 @@ private:
   double last_animate_time = -1.0;
   double last_animate_call = 0.0;
   float displayed_progress_ratio = 0.0f;
-  
+
   bool new_track_available = false;
 };
 

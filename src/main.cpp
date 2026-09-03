@@ -99,6 +99,9 @@ int main(int argc, char *argv[]) {
   runtime_options.drop_privileges = -1; // Don't drop privileges
   // defaults.show_refresh_rate = true;
   runtime_options.gpio_slowdown = 4;
+  // // Settings to reduce recording's black bars
+  // defaults.limit_refresh_rate_hz = 60;
+  // defaults.scan_mode = 1;
   std::unique_ptr<RGBMatrix> matrix(
       RGBMatrix::CreateFromFlags(&argc, &argv, &defaults, &runtime_options));
   if (matrix == NULL)
