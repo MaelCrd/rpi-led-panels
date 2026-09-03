@@ -2,7 +2,8 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <memory>
+#include <fstream>
+#include <iostream>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -186,6 +187,22 @@ void Image::refreshCache() {
   stbi_image_free(rgb_data);
 
   cache_valid.store(true, std::memory_order_release);
+}
+
+void Image::applyDefaultParameters() { applyPresetParameters(); }
+
+void Image::applyPresetParameters() {
+  std::ifstream file(ASSETS_DIR "/img/starry_night.jpg", std::ios::binary);
+  if (file) {
+    std::vector<uint8_t> buffer(std::istreambuf_iterator<char>(file), {});
+    params_.image_data.value = FastNoise::Base64::Encode(buffer);
+    cache_valid.store(false, std::memory_order_release);
+  } else {
+    std::cerr << "Failed to load default image: img/starry_night.jpg"
+              << std::endl;
+    params_.image_data.value.clear();
+    cache_valid.store(false, std::memory_order_release);
+  }
 }
 
 } // namespace animations

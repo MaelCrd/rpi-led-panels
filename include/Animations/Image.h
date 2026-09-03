@@ -11,6 +11,10 @@
 #include "Animation.h"
 #include "parameters/param_system.hpp"
 
+#ifndef ASSETS_DIR
+#define ASSETS_DIR ".."
+#endif
+
 namespace animations {
 
 struct ImageParams : ParameterSet<ImageParams> {
@@ -44,16 +48,8 @@ public:
   // Parameter change notification
   void onParametersChanged();
 
-  // Override mode parameter methods
-  void applyDefaultParameters() override {
-    params_.image_data.value.clear();
-    cache_valid = false;
-  }
-
-  void applyPresetParameters() override {
-    params_.image_data.value.clear();
-    cache_valid = false;
-  }
+  void applyDefaultParameters() override;
+  void applyPresetParameters() override;
 
 protected:
   rgb_matrix::FrameCanvas *offscreen_canvas;
