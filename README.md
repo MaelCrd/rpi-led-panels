@@ -20,48 +20,47 @@ This project utilizes the [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rg
     <td align="center"><b>Heightmap</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/game-of-life.gif"></td>
+    <td><img src=".github/assets/gif/heightmap.gif"></td>
   </tr>
   <tr>
     <td align="center"><b>Matrix</b></td>
-    <td align="center"><b>Heightmap (variation)</b></td>
+    <td align="center"><b>Heightmap</b> (variation)</td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/matrix.gif"></td>
+    <td><img src=".github/assets/gif/heightmap-var.gif"></td>
   </tr>
   <tr>
     <td align="center"><b>Waves</b></td>
     <td align="center"><b>Stars</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/waves.gif"></td>
+    <td><img src=".github/assets/gif/stars.gif"></td>
   </tr>
   <tr>
-    <td align="center"><b>Waves (variation)</b></td>
+    <td align="center"><b>Waves</b> (variation)</td>
     <td align="center"><b>Spotify</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/waves-var.gif"></td>
+    <td><img src=".github/assets/gif/spotify.gif"></td>
   </tr>
   <tr>
     <td align="center"><b>Glyphs</b></td>
     <td align="center"><b>Particles</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/glyphs.gif"></td>
+    <td><img src=".github/assets/gif/particles.gif"></td>
   </tr>
   <tr>
-    <td align="center"><i>Smooth transitions</i></td>
-    <td align="center">And more</td>
+    <td colspan="2" align="center">Bird flock simulation, maze generation &amp; more</td>
   </tr>
   <tr>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
-    <td><img src=".github/assets/anim-placeholder.jpg"></td>
+    <td><img src=".github/assets/gif/birds.gif"></td>
+    <td><img src=".github/assets/gif/mazegen.gif"></td>
   </tr>
 </table>
 
