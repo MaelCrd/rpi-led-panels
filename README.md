@@ -4,6 +4,8 @@ A C++ application for driving and animating RGB LED matrix panels on a Raspberry
 
 This project utilizes the [rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) library to control the hardware and features a built-in REST API powered by the [Oat++](https://oatpp.io/) web framework. The API allows to remotely switch animations, tweak animation parameters, adjust brightness, etc.
 
+A minimal web interface is also provided to control the panels from a browser here: [rpi-led-panels-frontend](https://github.com/MaelCrd/rpi-led-panels-frontend).
+
 ## Features
 
 - **Hardware control:** Native RGB LED matrix rendering on Raspberry Pi.
