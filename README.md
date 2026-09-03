@@ -18,51 +18,51 @@ A minimal web interface is also provided to control the panels from a browser he
 
 <table>
   <tr>
-    <td align="center"><b>Game of Life</b></td>
-    <td align="center"><b>Heightmap</b></td>
+    <td align="center" width="50%"><b>Game of Life</b></td>
+    <td align="center" width="50%"><b>Heightmap</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/game-of-life.gif"></td>
-    <td><img src=".github/assets/gif/heightmap.gif"></td>
+    <td><img src=".github/assets/gif/game-of-life.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/heightmap.gif"width="100%"></td>
   </tr>
   <tr>
-    <td align="center"><b>Matrix</b></td>
-    <td align="center"><b>Heightmap</b> (variation)</td>
+    <td align="center" width="50%"><b>Matrix</b></td>
+    <td align="center" width="50%"><b>Heightmap</b> (variation)</td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/matrix.gif"></td>
-    <td><img src=".github/assets/gif/heightmap-var.gif"></td>
+    <td><img src=".github/assets/gif/matrix.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/heightmap-var.gif"width="100%"></td>
   </tr>
   <tr>
-    <td align="center"><b>Waves</b></td>
-    <td align="center"><b>Stars</b></td>
+    <td align="center" width="50%"><b>Waves</b></td>
+    <td align="center" width="50%"><b>Stars</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/waves.gif"></td>
-    <td><img src=".github/assets/gif/stars.gif"></td>
+    <td><img src=".github/assets/gif/waves.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/stars.gif"width="100%"></td>
   </tr>
   <tr>
-    <td align="center"><b>Waves</b> (variation)</td>
-    <td align="center"><b>Spotify</b></td>
+    <td align="center" width="50%"><b>Waves</b> (variation)</td>
+    <td align="center" width="50%"><b>Spotify</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/waves-var.gif"></td>
-    <td><img src=".github/assets/gif/spotify.gif"></td>
+    <td><img src=".github/assets/gif/waves-var.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/spotify.gif"width="100%"></td>
   </tr>
   <tr>
-    <td align="center"><b>Glyphs</b></td>
-    <td align="center"><b>Particles</b></td>
+    <td align="center" width="50%"><b>Glyphs</b></td>
+    <td align="center" width="50%"><b>Particles</b></td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/glyphs.gif"></td>
-    <td><img src=".github/assets/gif/particles.gif"></td>
+    <td><img src=".github/assets/gif/glyphs.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/particles.gif"width="100%"></td>
   </tr>
   <tr>
     <td colspan="2" align="center">Bird flock simulation, maze generation &amp; more</td>
   </tr>
   <tr>
-    <td><img src=".github/assets/gif/birds.gif"></td>
-    <td><img src=".github/assets/gif/mazegen.gif"></td>
+    <td><img src=".github/assets/gif/birds.gif"width="100%"></td>
+    <td><img src=".github/assets/gif/mazegen.gif"width="100%"></td>
   </tr>
 </table>
 
